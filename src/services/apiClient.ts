@@ -1,6 +1,10 @@
 
 // Implementasi Real-time Data Fetching (In-Memory Only)
-const DIRECT_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? "/api" : "http://localhost:3001/api");
+const envUrl = import.meta.env.VITE_API_URL;
+const isProd = import.meta.env.PROD;
+const DIRECT_URL = isProd
+  ? (envUrl && !/localhost|127\.0\.0\.1/i.test(envUrl) ? envUrl : "/api")
+  : (envUrl || "http://localhost:3001/api");
 
 // Helper function untuk API calls langsung tanpa persistent storage
 export async function apiCall(endpoint: string, options: RequestInit = {}) {
