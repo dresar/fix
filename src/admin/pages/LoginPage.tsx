@@ -8,14 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Lock, Mail, Terminal, Shield } from 'lucide-react';
+import { Loader2, Lock, Mail, Terminal } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import adminApi from '../services/adminApi';
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
   password: z.string().min(1, { message: "Password is required" }),
-  accessCode: z.string().optional(),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -29,30 +28,18 @@ export default function LoginPage() {
   // Check environment
   const isDev = import.meta.env.DEV;
   const isProd = import.meta.env.PROD;
-  const brucePassword = String(import.meta.env.VITE_BRUCE_PASSWORD || '');
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: '',
       password: '',
-      accessCode: '',
     },
   });
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      if (isProd && brucePassword) {
-        if (!data.accessCode || data.accessCode !== brucePassword) {
-          toast({
-            variant: "destructive",
-            title: "Access Denied",
-            description: "Kode akses produksi tidak valid.",
-          });
-          return;
-        }
-      }
       const response = await adminApi.post('/auth/login', data);
       
       const { user, token } = response.data;
@@ -141,24 +128,7 @@ export default function LoginPage() {
               )}
             </div>
             
-            {isProd && brucePassword && (
-              <div className="space-y-2">
-                <Label htmlFor="accessCode">Kode Akses Produksi</Label>
-                <div className="relative">
-                  <Shield className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    id="accessCode" 
-                    type="password"
-                    placeholder="Masukkan kode akses produksi"
-                    className="pl-9" 
-                    {...form.register('accessCode')} 
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Keamanan ekstra: dibutuhkan saat mode produksi aktif.
-                </p>
-              </div>
-            )}
+            
             
             <Button className="w-full" type="submit" disabled={isLoading}>
               {isLoading ? (

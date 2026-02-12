@@ -14,6 +14,36 @@ dotenv.config();
 // Allow lazy loading of DB_URL for tests
 let pool: Pool;
 
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+const WINDOW_MS = 5 * 60 * 1000;
+const MAX_ATTEMPTS = 10;
+function isRateLimited(ip: string) {
+  const now = Date.now();
+  const rec = loginAttempts.get(ip);
+  if (!rec) return false;
+  if (now > rec.resetAt) {
+    loginAttempts.delete(ip);
+    return false;
+  }
+  return rec.count >= MAX_ATTEMPTS;
+}
+function trackFailed(ip: string) {
+  const now = Date.now();
+  const rec = loginAttempts.get(ip);
+  if (!rec) {
+    loginAttempts.set(ip, { count: 1, resetAt: now + WINDOW_MS });
+    return;
+  }
+  if (now > rec.resetAt) {
+    loginAttempts.set(ip, { count: 1, resetAt: now + WINDOW_MS });
+    return;
+  }
+  rec.count += 1;
+}
+function clearAttempts(ip: string) {
+  loginAttempts.delete(ip);
+}
+
 const getPool = () => {
     if (pool) return pool;
     const DB_URL = process.env.DATABASE_URL;
@@ -689,6 +719,8 @@ export default async function handler(req: any, res: any) {
             if (req.method !== 'POST') return sendJSON(res, 405, { error: 'Method not allowed' });
             const body = await parseBody(req);
             const { email, password } = body;
+            const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown');
+            if (isRateLimited(ip)) return sendJSON(res, 429, { error: 'Too many attempts' });
       
             // Allow demo login explicitly for tests without DB if needed
             if (email === 'admin@example.com' && password === 'admin') {
@@ -699,7 +731,8 @@ export default async function handler(req: any, res: any) {
             // Use try-catch to safely handle DB connection errors during login
             try {
                 const user = await getDb().query.users.findFirst({ where: eq(users.email, email) });
-                if (user && user.password === password) {
+                if (user && user.password === password && user.isActive) {
+                    clearAttempts(ip);
                     return sendJSON(res, 200, { 
                         token: 'fake-jwt-token', 
                         user: { id: user.id, email: user.email, name: user.name, role: 'admin' } 
@@ -711,7 +744,23 @@ export default async function handler(req: any, res: any) {
                 // but logging error helps debugging.
             }
 
+            trackFailed(ip);
             return sendJSON(res, 401, { error: 'Invalid credentials' });
+        }
+        if (action === 'register') {
+            if (req.method !== 'POST') return sendJSON(res, 405, { error: 'Method not allowed' });
+            const body = await parseBody(req);
+            const { email, password, name } = body || {};
+            if (!email || !password) return sendJSON(res, 400, { error: 'Email and password required' });
+            try {
+                const existing = await getDb().query.users.findFirst({ where: eq(users.email, email) });
+                if (existing) return sendJSON(res, 409, { error: 'User already exists' });
+                const inserted = await getDb().insert(users).values({ email, password, name, isActive: true }).returning();
+                const u = inserted?.[0];
+                return sendJSON(res, 200, { id: u.id, email: u.email, name: u.name });
+            } catch (err) {
+                return sendJSON(res, 500, { error: 'Failed to register' });
+            }
         }
         if (action === 'me') {
              if (req.method === 'GET') {
@@ -784,6 +833,26 @@ export default async function handler(req: any, res: any) {
              }
 
              return sendJSON(res, 405, { error: 'Method not allowed' });
+        }
+        if (action === 'reset') {
+            if (req.method !== 'POST') return sendJSON(res, 405, { error: 'Method not allowed' });
+            const body = await parseBody(req);
+            const { email, password, token } = body || {};
+            const secret = process.env.ADMIN_RESET_TOKEN || '';
+            if (!secret || token !== secret) return sendJSON(res, 403, { error: 'Forbidden' });
+            if (!email || !password) return sendJSON(res, 400, { error: 'Email and password required' });
+            try {
+                const existing = await getDb().query.users.findFirst({ where: eq(users.email, email) });
+                if (!existing) {
+                    const inserted = await getDb().insert(users).values({ email, password, name: 'Admin', isActive: true }).returning();
+                    const u = inserted?.[0];
+                    return sendJSON(res, 200, { id: u.id, email: u.email, name: u.name });
+                }
+                await getDb().update(users).set({ password, email, updatedAt: new Date() }).where(eq(users.id, existing.id));
+                return sendJSON(res, 200, { success: true });
+            } catch (err) {
+                return sendJSON(res, 500, { error: 'Failed to reset password' });
+            }
         }
     }
 
