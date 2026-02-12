@@ -8,7 +8,7 @@
  */
 
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { useAdminAuthStore } from '../store/adminAuthStore';
+import { useAdminAuthStore } from '../admin/store/adminAuthStore';
 
 // ==========================================
 // CONFIGURATION
@@ -792,3 +792,30 @@ export const api = {
 };
 
 export default api;
+export const siteSettingsAPI = api.content.settings;
+export const socialLinksAPI = api.socialLinks;
+export const profileAPI = api.profile;
+export const projectsAPI = api.projects;
+export const projectCategoriesAPI = api.projectCategories;
+export const skillsAPI = api.skills;
+export const experienceAPI = api.experience;
+export const educationAPI = api.education;
+export const certificatesAPI = api.certificates;
+export const certificateCategoriesAPI = {
+  getAll: api.certificateCategories.getAll,
+  create: api.certificateCategories.create,
+  update: api.certificateCategories.update,
+  delete: api.certificateCategories.delete,
+  bulkDelete: api.certificateCategories.bulkDelete,
+};
+export const blogPostsAPI = api.blog.posts;
+export const blogCategoriesAPI = api.blog.categories;
+export const messagesAPI = api.messages;
+export const waTemplatesAPI = api.waTemplates;
+export const skillCategoriesAPI = {
+  getAll: api.skillCategories.getAll,
+  create: api.skillCategories.create,
+  update: api.skillCategories.update,
+  delete: api.skillCategories.delete,
+  bulkDelete: api.skillCategories.bulkDelete,
+};
