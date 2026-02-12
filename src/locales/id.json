@@ -1,0 +1,193 @@
+{
+  "nav": {
+    "home": "Beranda",
+    "about": "Tentang",
+    "skills": "Keahlian",
+    "experience": "Pengalaman",
+    "projects": "Proyek",
+    "education": "Pendidikan",
+    "certificates": "Sertifikat",
+    "blog": "Blog",
+    "contact": "Kontak"
+  },
+  "hero": {
+    "greeting": "Halo, Saya",
+    "role_default": "Pengembang",
+    "description_default": "Saya seorang pengembang dan desainer yang bersemangat menciptakan pengalaman digital yang indah dan fungsional.",
+    "download_resume": "Unduh Resume",
+    "view_work": "Lihat Karya",
+    "projects_completed": "Proyek Selesai",
+    "years_experience": "Tahun Pengalaman"
+  },
+  "seo": {
+    "site_title": "Eka - Full Stack Developer & UI/UX Designer",
+    "site_description": "Portofolio profesional Eka. Menampilkan proyek web development, desain UI/UX, dan keahlian teknis modern.",
+    "site_keywords": "portofolio, web developer, frontend, backend, react, nodejs, ui/ux design, indonesia",
+    "og_title": "Portofolio Eka - Solusi Digital Inovatif",
+    "og_description": "Jelajahi koleksi proyek, pengalaman, dan artikel terbaru seputar teknologi dari Eka.",
+    "author": "Eka"
+  },
+  "sections": {
+    "about": {
+      "title": "Tentang Saya",
+      "subtitle": "Kenali lebih dekat perjalanan dan minat saya"
+    },
+    "skills": {
+      "title": "Keahlian Teknis",
+      "subtitle": "Teknologi dan alat yang saya gunakan untuk membangun solusi"
+    },
+    "experience": {
+      "title": "Pengalaman Kerja",
+      "subtitle": "Perjalanan profesional dan peran yang pernah saya emban"
+    },
+    "projects": {
+      "title": "Proyek Unggulan",
+      "subtitle": "Beberapa hasil karya terbaik yang pernah saya kerjakan",
+      "ai_summary": "AI Insight",
+      "viewDetails": "Detail",
+      "no_thumbnail": "Tidak ada gambar",
+      "all_projects": "Semua Proyek"
+    },
+    "education": {
+      "title": "Riwayat Pendidikan",
+      "subtitle": "Latar belakang akademis dan kualifikasi saya"
+    },
+    "certificates": {
+      "title": "Sertifikasi",
+      "subtitle": "Pengakuan profesional dan pencapaian pembelajaran"
+    },
+    "contact": {
+      "title": "Hubungi Saya",
+      "subtitle": "Mari diskusikan bagaimana kita bisa bekerja sama"
+    }
+  },
+  "common": {
+    "loading": "Memuat...",
+    "error": "Terjadi kesalahan",
+    "save": "Simpan",
+    "cancel": "Batal",
+    "delete": "Hapus",
+    "edit": "Ubah",
+    "present": "Sekarang",
+    "previous": "Sebelumnya",
+    "next": "Selanjutnya",
+    "page_info": "Halaman {{current}} dari {{total}}",
+    "all": "Semua",
+    "retry": "Muat Ulang",
+    "link_copied": "Link disalin!",
+    "share_label": "Bagikan:",
+    "copy_link": "Salin Link"
+  },
+  "education": {
+    "title": "Riwayat Pendidikan",
+    "subtitle": "Latar belakang akademis dan kualifikasi saya",
+    "gallery": "Galeri",
+    "docs": "Dokumen",
+    "gpa": "IPK:"
+  },
+  "skills": {
+    "title": "Keahlian Teknis",
+    "subtitle": "Teknologi dan alat yang saya gunakan untuk membangun solusi",
+    "no_skills": "Tidak ada keahlian ditemukan dalam kategori ini."
+  },
+  "certificates": {
+    "title": "Sertifikasi",
+    "subtitle": "Pengakuan profesional dan pencapaian pembelajaran",
+    "view": "Lihat Sertifikat",
+    "verify": "Verifikasi"
+  },
+  "footer": {
+    "made_with": "Dibuat dengan",
+    "in_indonesia": "di Indonesia"
+  },
+  "contact": {
+    "title": "Hubungi Saya",
+    "subtitle": "Mari diskusikan bagaimana kita bisa bekerja sama",
+    "form": {
+      "title": "Kirim Pesan",
+      "name": "Nama Lengkap",
+      "email": "Email",
+      "subject": "Subjek",
+      "message": "Pesan",
+      "name_placeholder": "Nama Lengkap Anda",
+      "email_placeholder": "email@anda.com",
+      "subject_placeholder": "Tawaran Proyek",
+      "message_placeholder": "Ceritakan detail proyek Anda...",
+      "send": "Kirim Pesan",
+      "sending": "Mengirim..."
+    },
+    "info": {
+      "email": "Email",
+      "phone": "Telepon",
+      "location": "Lokasi"
+    },
+    "follow_me": "Ikuti Saya",
+    "toast": {
+      "success": "Pesan berhasil dikirim! Saya akan segera membalasnya.",
+      "error": "Gagal mengirim pesan. Silakan coba lagi nanti."
+    }
+  },
+  "projects": {
+    "title": "Proyek Unggulan",
+    "subtitle": "Beberapa hasil karya terbaik yang pernah saya kerjakan",
+    "default_category": "Proyek",
+    "all_projects": "Semua Proyek",
+    "view_details": "Lihat Detail",
+    "no_thumbnail": "Tidak Ada Gambar",
+    "not_found": "Proyek tidak ditemukan",
+    "back_to_home": "Kembali ke Beranda",
+    "additional_resources": "Sumber Daya Tambahan",
+    "no_content": "Tidak ada konten detail untuk proyek ini.",
+    "live_demo": "Live Demo",
+    "repository": "Repository"
+  },
+  "blog": {
+    "latest_title": "Artikel Terbaru",
+    "subtitle": "Tulisan, pemikiran, dan tutorial seputar teknologi dan pengembangan software.",
+    "read_more": "Baca Selengkapnya",
+    "view_all": "Lihat Semua Artikel",
+    "default_category": "Artikel",
+    "title": "Blog & Artikel",
+    "description": "Berbagi pengetahuan, pengalaman, dan pandangan seputar dunia teknologi.",
+    "search_placeholder": "Cari artikel...",
+    "category_label": "Kategori",
+    "general": "Umum",
+    "sort_label": "Urutkan",
+    "sort": {
+      "newest": "Terbaru",
+      "oldest": "Terlama",
+      "az": "Judul (A-Z)",
+      "za": "Judul (Z-A)"
+    },
+    "active_filter": "Filter aktif:",
+    "search_label": "Pencarian:",
+    "reset_filter": "Reset Filter",
+    "error_title": "Gagal Memuat Data",
+    "error_description": "Terjadi kesalahan saat mengambil data blog. Silakan coba lagi beberapa saat lagi.",
+    "no_posts": "Tidak ada artikel yang ditemukan.",
+    "clear_filter": "Hapus Filter",
+    "not_found": "Artikel tidak ditemukan",
+    "back_to_blog": "Kembali ke Blog",
+    "share_article": "Bagikan Artikel",
+    "about_author": "Tentang Penulis",
+    "author_role": "Software Engineer & Tech Enthusiast",
+    "author_bio": "Suka berbagi pengalaman seputar teknologi, coding, dan pengembangan karir di dunia IT.",
+    "interaction": "Interaksi",
+    "likes": "Suka",
+    "views": "Dilihat",
+    "comments": "Komentar",
+    "write_comment": "Tulis komentar..."
+  },
+  "whatsapp": {
+    "title": "Chat via WhatsApp",
+    "description": "Kirim pesan langsung ke WhatsApp saya. Pilih template untuk memulai dengan cepat.",
+    "select_template": "Pilih Template",
+    "select_topic": "Pilih topik pembicaraan...",
+    "search_template": "Cari template...",
+    "template_not_found": "Template tidak ditemukan.",
+    "message_label": "Pesan",
+    "message_placeholder": "Halo, saya ingin berdiskusi tentang...",
+    "send": "Kirim Pesan",
+    "no_number_configured": "Nomor WhatsApp belum dikonfigurasi. Silakan hubungi administrator."
+  }
+}

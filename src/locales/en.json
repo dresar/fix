@@ -1,0 +1,185 @@
+{
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "skills": "Skills",
+    "experience": "Experience",
+    "projects": "Projects",
+    "education": "Education",
+    "certificates": "Certificates",
+    "blog": "Blog",
+    "contact": "Contact"
+  },
+  "hero": {
+    "greeting": "Hello, I'm",
+    "role_default": "Developer",
+    "description_default": "I'm a passionate developer and designer creating beautiful, functional digital experiences that make a difference.",
+    "download_resume": "Download Resume",
+    "view_work": "View Work",
+    "projects_completed": "Projects Completed",
+    "years_experience": "Years Experience"
+  },
+  "sections": {
+    "about": {
+      "title": "About Me",
+      "subtitle": "Get to know more about my journey and interests"
+    },
+    "skills": {
+      "title": "Technical Skills",
+      "subtitle": "Technologies and tools I use to build solutions"
+    },
+    "experience": {
+      "title": "Work Experience",
+      "subtitle": "My professional journey and roles I've held"
+    },
+    "projects": {
+      "title": "Featured Projects",
+      "subtitle": "Some of the best work I've done",
+      "ai_summary": "AI Insight",
+      "viewDetails": "Detail",
+      "no_thumbnail": "No thumbnail",
+      "all_projects": "All Projects"
+    },
+    "education": {
+      "title": "Education History",
+      "subtitle": "My academic background and qualifications"
+    },
+    "certificates": {
+      "title": "Certifications",
+      "subtitle": "Professional recognition and learning achievements"
+    },
+    "contact": {
+      "title": "Contact Me",
+      "subtitle": "Let's discuss how we can work together"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "present": "Present",
+    "previous": "Previous",
+    "next": "Next",
+    "page_info": "Page {{current}} of {{total}}",
+    "all": "All",
+    "retry": "Retry",
+    "link_copied": "Link copied!",
+    "share_label": "Share:",
+    "copy_link": "Copy Link"
+  },
+  "education": {
+    "title": "Education History",
+    "subtitle": "My academic background and qualifications",
+    "gallery": "Gallery",
+    "docs": "Docs",
+    "gpa": "GPA:"
+  },
+  "skills": {
+    "title": "Technical Skills",
+    "subtitle": "Technologies and tools I use to build solutions",
+    "no_skills": "No skills found in this category."
+  },
+  "certificates": {
+    "title": "Certifications",
+    "subtitle": "Professional recognition and learning achievements",
+    "view": "View Certificate",
+    "verify": "Verify"
+  },
+  "footer": {
+    "made_with": "Made with",
+    "in_indonesia": "in Indonesia"
+  },
+  "contact": {
+    "title": "Contact Me",
+    "subtitle": "Let's discuss how we can work together",
+    "form": {
+      "title": "Send a Message",
+      "name": "Your Name",
+      "email": "Your Email",
+      "subject": "Subject",
+      "message": "Message",
+      "name_placeholder": "John Doe",
+      "email_placeholder": "you@example.com",
+      "subject_placeholder": "Project Inquiry",
+      "message_placeholder": "Tell me about your project...",
+      "send": "Send Message",
+      "sending": "Sending..."
+    },
+    "info": {
+      "email": "Email",
+      "phone": "Phone",
+      "location": "Location"
+    },
+    "follow_me": "Follow Me",
+    "toast": {
+      "success": "Message sent successfully! I will get back to you soon.",
+      "error": "Failed to send message. Please try again later."
+    }
+  },
+  "projects": {
+    "title": "Featured Projects",
+    "subtitle": "Some of the best work I've done",
+    "default_category": "Project",
+    "all_projects": "All Projects",
+    "view_details": "View Details",
+    "no_thumbnail": "No Thumbnail",
+    "not_found": "Project not found",
+    "back_to_home": "Back to Home",
+    "additional_resources": "Additional Resources",
+    "no_content": "No detailed content for this project.",
+    "live_demo": "Live Demo",
+    "repository": "Repository"
+  },
+  "blog": {
+    "latest_title": "Latest Articles",
+    "subtitle": "Thoughts, ideas, and tutorials on technology and software development.",
+    "read_more": "Read More",
+    "view_all": "View All Articles",
+    "default_category": "Article",
+    "title": "Blog & Articles",
+    "description": "Sharing knowledge, experiences, and insights about the world of technology.",
+    "search_placeholder": "Search articles...",
+    "category_label": "Category",
+    "general": "General",
+    "sort_label": "Sort by",
+    "sort": {
+      "newest": "Newest",
+      "oldest": "Oldest",
+      "az": "Title (A-Z)",
+      "za": "Title (Z-A)"
+    },
+    "active_filter": "Active filters:",
+    "search_label": "Search:",
+    "reset_filter": "Reset Filter",
+    "error_title": "Failed to Load Data",
+    "error_description": "An error occurred while fetching blog data. Please try again later.",
+    "no_posts": "No articles found.",
+    "clear_filter": "Clear Filter",
+    "not_found": "Article not found",
+    "back_to_blog": "Back to Blog",
+    "share_article": "Share Article",
+    "about_author": "About the Author",
+    "author_role": "Software Engineer & Tech Enthusiast",
+    "author_bio": "Loves sharing experiences about technology, coding, and career development in IT.",
+    "interaction": "Engagement",
+    "likes": "Likes",
+    "views": "Views",
+    "comments": "Comments",
+    "write_comment": "Write a comment..."
+  },
+  "whatsapp": {
+    "title": "Chat via WhatsApp",
+    "description": "Send a message directly to my WhatsApp. Choose a template to start quickly.",
+    "select_template": "Select Template",
+    "select_topic": "Select topic...",
+    "search_template": "Search template...",
+    "template_not_found": "Template not found.",
+    "message_label": "Message",
+    "message_placeholder": "Hello, I would like to discuss...",
+    "send": "Send Message",
+    "no_number_configured": "WhatsApp number is not configured yet. Please contact the administrator."
+  }
+}
