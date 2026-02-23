@@ -355,9 +355,21 @@ export const api = {
     },
     settings: {
       get: async (): Promise<any> => {
-        const response = await apiClient.get('/settings');
-        const data = response.data;
-        return Array.isArray(data) ? data[0] : data;
+        try {
+          const response = await apiClient.get('/settings');
+          const data = response.data;
+          try { localStorage.setItem('settings_cache', JSON.stringify(data)); } catch {}
+          return Array.isArray(data) ? data[0] : data;
+        } catch (e) {
+          try {
+            const cached = localStorage.getItem('settings_cache');
+            if (cached) {
+              const data = JSON.parse(cached);
+              return Array.isArray(data) ? data[0] : data;
+            }
+          } catch {}
+          return {};
+        }
       },
       update: async (data: any): Promise<any> => {
         const id = data?.id;
@@ -376,8 +388,24 @@ export const api = {
   // ----------------------------------------
   profile: {
     get: async (): Promise<Profile> => {
-      const response = await apiClient.get<Profile>('/profile');
-      return response.data;
+      try {
+        const response = await apiClient.get<Profile>('/profile');
+        try { localStorage.setItem('profile_cache', JSON.stringify(response.data)); } catch {}
+        return response.data;
+      } catch (e) {
+        try {
+          const cached = localStorage.getItem('profile_cache');
+          if (cached) return JSON.parse(cached);
+        } catch {}
+        return {
+          full_name: 'John Doe',
+          headline: 'Software Engineer',
+          bio: '',
+          contact_email: 'john@example.com',
+          status: 'available',
+          isActive: true
+        } as any;
+      }
     },
     update: async (data: Partial<Profile>): Promise<Profile> => {
       // The backend endpoint might be /profile (POST) or /profile/:id (PUT)
@@ -389,8 +417,17 @@ export const api = {
 
   socialLinks: {
     getAll: async (): Promise<SocialLink[]> => {
-      const response = await apiClient.get<SocialLink[]>('/social-links');
-      return response.data;
+      try {
+        const response = await apiClient.get<SocialLink[]>('/social-links');
+        try { localStorage.setItem('social_links_cache', JSON.stringify(response.data)); } catch {}
+        return response.data;
+      } catch (e) {
+        try {
+          const cached = localStorage.getItem('social_links_cache');
+          if (cached) return JSON.parse(cached);
+        } catch {}
+        return [];
+      }
     },
     create: async (data: Omit<SocialLink, 'id'>): Promise<SocialLink> => {
       const response = await apiClient.post<SocialLink>('/social-links', data);

@@ -14,7 +14,11 @@ import { useAdminAuthStore } from '../store/adminAuthStore';
 // CONFIGURATION
 // ==========================================
 
-const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:3001/api');
+const envUrl = import.meta.env.VITE_API_URL;
+const isProd = import.meta.env.PROD;
+const API_URL = isProd
+  ? (envUrl && !/localhost|127\.0\.0\.1/i.test(envUrl) ? envUrl : '/api')
+  : (envUrl || 'http://localhost:3001/api');
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_URL,
