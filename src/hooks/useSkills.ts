@@ -3,9 +3,11 @@ import { skillsAPI } from '../services/api';
 import { useMemo } from 'react';
 
 export const useSkills = () => {
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['skills'],
     queryFn: skillsAPI.getAll,
+    retry: 0,
+    staleTime: 300000,
   });
 
   const skills = useMemo(() => {
@@ -17,6 +19,6 @@ export const useSkills = () => {
   return {
     skills,
     isLoading,
-    error,
+    isError,
   };
 };

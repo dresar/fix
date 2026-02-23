@@ -40,9 +40,6 @@ export default function EducationList() {
     queryFn: api.education.getAll,
   });
 
-  // Debug: Log data to verify images
-  // console.log('Education List Data:', educationList);
-
   const toggleSelectAll = () => {
     if (selectedIds.length === educationList.length) {
       setSelectedIds([]);

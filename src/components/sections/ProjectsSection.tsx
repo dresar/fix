@@ -17,6 +17,7 @@ export const ProjectsSection = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [summaryProject, setSummaryProject] = useState<any>(null);
   const [summaryIndex, setSummaryIndex] = useState(0);
+  const [viewedProjects, setViewedProjects] = useState<number[]>([]);
   const itemsPerPage = 15; // Show 15 projects per page with pagination
   const { projects = [], isLoading, isError } = useProjects();
 
@@ -26,7 +27,9 @@ export const ProjectsSection = () => {
   ], [categories, t]);
 
   const filteredProjects = projects.filter((project: any) =>
-    activeFilter === 'all' ? true : project.category === activeFilter
+    activeFilter === 'all' 
+      ? true 
+      : (project.categoryId === activeFilter || project.category?.id === activeFilter)
   );
 
   const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
@@ -146,10 +149,20 @@ export const ProjectsSection = () => {
                   {/* AI Summary Button - Top Right */}
                   <Button
                     size="icon"
-                    variant="secondary"
-                    className="absolute top-2 right-2 z-20 h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-primary hover:text-white transition-colors shadow-sm"
+                    variant={viewedProjects.includes(project.id) ? "default" : "secondary"}
+                    className={`absolute top-2 right-2 z-20 h-8 w-8 rounded-full backdrop-blur-sm transition-colors shadow-sm ${
+                        viewedProjects.includes(project.id) 
+                            ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                            : "bg-background/80 hover:bg-primary hover:text-white"
+                    }`}
                     onClick={(e) => {
                       e.stopPropagation();
+                      
+                      // Mark as viewed if not already
+                      if (!viewedProjects.includes(project.id)) {
+                        setViewedProjects(prev => [...prev, project.id]);
+                      }
+
                       // Randomize index if summaries exist to show different variations
                       if (project.summaries && project.summaries.length > 0) {
                           const randomIndex = Math.floor(Math.random() * project.summaries.length);
@@ -159,9 +172,9 @@ export const ProjectsSection = () => {
                       }
                       setSummaryProject(project);
                     }}
-                    title={t('projects.ai_summary')}
+                    title={viewedProjects.includes(project.id) ? t('projects.viewed_summary') : t('projects.ai_summary')}
                   >
-                    <Sparkles className="h-4 w-4" />
+                    <Sparkles className={`h-4 w-4 ${viewedProjects.includes(project.id) ? "fill-current" : ""}`} />
                   </Button>
 
                   {/* Overlay with Detail Button */}

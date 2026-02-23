@@ -13,14 +13,13 @@ import { GlobalModal } from '@/components/GlobalModal';
 import { BlobCursor } from '@/components/effects/BlobCursor';
 import { FloatingWhatsApp } from '@/components/effects/FloatingWhatsApp';
 import { ScrollToTop } from '@/components/effects/ScrollToTop';
-import { Preloader } from '@/components/ui/Preloader';
 import { useProfile } from '@/hooks/useProfile';
 
 const Index = () => {
   const { isLoading } = useProfile();
 
   if (isLoading) {
-    return <Preloader />;
+    return <div className="fixed inset-0 bg-background" />;
   }
 
   return (

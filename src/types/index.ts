@@ -60,6 +60,7 @@ export interface SkillCategory {
   id?: number;
   name: string;
   slug: string;
+  order?: number;
 }
 
 export interface Skill {

@@ -91,7 +91,7 @@ export class DataManager {
     const isDev = import.meta.env.DEV || import.meta.env.MODE === 'development';
 
     if (isAdmin || isDev) {
-      // console.log(`[DataManager] Bypass cache (Admin: ${isAdmin}, Dev: ${isDev}) for: ${endpoint}`);
+      // Bypass cache (Admin: ${isAdmin}, Dev: ${isDev}) for: ${endpoint}
       return apiCall(endpoint, options);
     }
 

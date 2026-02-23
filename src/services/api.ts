@@ -9,6 +9,7 @@
 
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { useAdminAuthStore } from '../admin/store/adminAuthStore';
+import skillsSeed from '../../skill_category.json';
 
 // ==========================================
 // CONFIGURATION
@@ -54,7 +55,11 @@ apiClient.interceptors.response.use(
       
       // Logout user if token is invalid
       useAdminAuthStore.getState().logout();
-      window.location.href = '/admin/login';
+      
+      // Only redirect to login if currently in admin area
+      if (window.location.pathname.startsWith('/admin')) {
+        window.location.href = '/admin/login';
+      }
       
       return Promise.reject(error);
     }
@@ -185,6 +190,7 @@ export interface Skill {
   category_id?: number;
   proficiency: number; // 0-100
   icon_url?: string;
+  logo_url?: string;
   is_featured: boolean;
   sort_order: number;
   category?: SkillCategory; // Joined
@@ -470,8 +476,8 @@ export const api = {
       const response = await apiClient.post(`/projects/${projectId}/summaries`, data);
       return response.data;
     },
-    deleteSummary: async (summaryId: number): Promise<void> => {
-      await apiClient.delete(`/projects/summaries/${summaryId}`);
+    deleteSummary: async (projectId: number, summaryId: number): Promise<void> => {
+      await apiClient.delete(`/projects/${projectId}/summaries/${summaryId}`);
     },
   },
 
@@ -501,8 +507,19 @@ export const api = {
   // ----------------------------------------
   skills: {
     getAll: async (): Promise<Skill[]> => {
-      const response = await apiClient.get<Skill[]>('/skills');
-      return response.data;
+      try {
+        const response = await apiClient.get<Skill[]>('/skills');
+        try {
+          localStorage.setItem('skills_cache', JSON.stringify(response.data));
+        } catch {}
+        return response.data;
+      } catch (e) {
+        try {
+          const cached = localStorage.getItem('skills_cache');
+          if (cached) return JSON.parse(cached);
+        } catch {}
+        return Array.isArray(skillsSeed) ? (skillsSeed as any) : [];
+      }
     },
     create: async (data: any): Promise<Skill> => {
       const response = await apiClient.post<Skill>('/skills', data);
@@ -522,8 +539,28 @@ export const api = {
 
   skillCategories: {
     getAll: async (): Promise<SkillCategory[]> => {
-      const response = await apiClient.get<SkillCategory[]>('/skill-categories');
-      return response.data;
+      try {
+        const response = await apiClient.get<SkillCategory[]>('/skill-categories');
+        try {
+          localStorage.setItem('skill_categories_cache', JSON.stringify(response.data));
+        } catch {}
+        return response.data;
+      } catch (e) {
+        try {
+          const cached = localStorage.getItem('skill_categories_cache');
+          if (cached) return JSON.parse(cached);
+        } catch {}
+        return [
+          { id: 1, name: 'Frontend', description: '', sort_order: 1 },
+          { id: 2, name: 'Backend', description: '', sort_order: 2 },
+          { id: 3, name: 'Fullstack', description: '', sort_order: 3 },
+          { id: 4, name: 'DevOps', description: '', sort_order: 4 },
+          { id: 5, name: 'Database', description: '', sort_order: 5 },
+          { id: 6, name: 'Mobile', description: '', sort_order: 6 },
+          { id: 7, name: 'UI/UX', description: '', sort_order: 7 },
+          { id: 8, name: 'Tools', description: '', sort_order: 8 }
+        ] as any;
+      }
     },
     create: async (data: any): Promise<SkillCategory> => {
       const response = await apiClient.post<SkillCategory>('/skill-categories', data);

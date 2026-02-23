@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -28,6 +28,23 @@ export default function LoginPage() {
   // Check environment
   const isDev = import.meta.env.DEV;
   const isProd = import.meta.env.PROD;
+
+  useEffect(() => {
+    // Add noindex meta tag for SEO protection
+    const meta = document.createElement('meta');
+    meta.name = "robots";
+    meta.content = "noindex, nofollow";
+    document.head.appendChild(meta);
+
+    return () => {
+      // Cleanup
+      try {
+        document.head.removeChild(meta);
+      } catch (e) {
+        // Ignore if already removed
+      }
+    };
+  }, []);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),

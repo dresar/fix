@@ -44,6 +44,8 @@
       "title": "Proyek Unggulan",
       "subtitle": "Beberapa hasil karya terbaik yang pernah saya kerjakan",
       "ai_summary": "AI Insight",
+      "viewed_summary": "AI Insight",
+      "ai_generated": "Dibuat oleh AI",
       "viewDetails": "Detail",
       "no_thumbnail": "Tidak ada gambar",
       "all_projects": "Semua Proyek"
@@ -68,6 +70,7 @@
     "cancel": "Batal",
     "delete": "Hapus",
     "edit": "Ubah",
+    "details": "Detail",
     "present": "Sekarang",
     "previous": "Sebelumnya",
     "next": "Selanjutnya",

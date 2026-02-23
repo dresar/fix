@@ -181,9 +181,6 @@ export default function BlogForm() {
   const loadPost = async (postId: number) => {
     setIsLoading(true);
     try {
-      // Debug logging to verify API structure
-      // console.log('Checking api.blog.posts:', api.blog?.posts);
-      
       // Fallback if getById is missing (HMR issue?)
       let postData;
       if (typeof api.blog.posts.getById === 'function') {

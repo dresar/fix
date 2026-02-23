@@ -15,7 +15,6 @@ export function useAdminPrefetch() {
     const prefetchData = async () => {
       setIsLoading(true);
       setProgress(0);
-      console.log('🚀 Prefetching admin data...');
       
       const queries = [
         // Content
@@ -67,7 +66,6 @@ export function useAdminPrefetch() {
         )
       );
       
-      console.log('✅ Admin data prefetching complete');
       setIsLoading(false);
     };
 

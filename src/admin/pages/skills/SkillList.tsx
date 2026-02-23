@@ -32,6 +32,7 @@ import { ModernLoader } from '@/components/ui/ModernLoader';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DeleteAlert } from "../../components/DeleteAlert";
+import { SkillCategoryManager } from "./SkillCategoryManager";
 
 // Helper to get icon based on category
 const getCategoryIcon = (category: string | any) => {
@@ -65,17 +66,22 @@ export default function SkillList() {
     isBulk?: boolean;
   }>({ isOpen: false });
 
-  // Form State
   const [formData, setFormData] = useState({
     name: '',
-    category: 'Frontend',
-    percentage: 50
+    categoryId: null as null | number,
+    percentage: 50,
+    logo_url: ''
   });
 
   const { data: skills = [] } = useQuery({
     queryKey: ['skills'],
     queryFn: api.skills.getAll,
     // Stale time handled globally in App.tsx (Infinity)
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['skillCategories'],
+    queryFn: api.skillCategories.getAll,
   });
 
   // Removed loader
@@ -129,15 +135,25 @@ export default function SkillList() {
       setCurrentSkill(skill);
       setFormData({
         name: skill.name,
-        category: typeof skill.category === 'object' && skill.category ? (skill.category.name || 'Frontend') : (skill.category || 'Frontend'),
-        percentage: skill.percentage || skill.proficiency || 50
+        categoryId:
+          typeof skill.category === 'object' && skill.category
+            ? Number(skill.category.id)
+            : typeof skill.category === 'number'
+              ? Number(skill.category)
+              : (() => {
+                  const byName = categories.find((c: any) => String(c.name).toLowerCase() === String(skill.category || '').toLowerCase());
+                  return byName ? Number(byName.id) : null;
+                })(),
+        percentage: skill.percentage || skill.proficiency || 50,
+        logo_url: skill.logo_url || ''
       });
     } else {
       setCurrentSkill(null);
       setFormData({
         name: '',
-        category: 'Frontend',
-        percentage: 50
+        categoryId: categories?.[0]?.id ? Number(categories[0].id) : null,
+        percentage: 50,
+        logo_url: ''
       });
     }
     setIsModalOpen(true);
@@ -147,10 +163,20 @@ export default function SkillList() {
     e.preventDefault();
     try {
       if (currentSkill) {
-        await api.skills.update(currentSkill.id, formData);
+        await api.skills.update(currentSkill.id, {
+          name: formData.name,
+          percentage: formData.percentage,
+          categoryId: formData.categoryId ?? undefined,
+          logo_url: formData.logo_url || undefined
+        });
         toast({ title: "Berhasil", description: "Skill berhasil diperbarui." });
       } else {
-        await api.skills.create(formData);
+        await api.skills.create({
+          name: formData.name,
+          percentage: formData.percentage,
+          categoryId: formData.categoryId ?? undefined,
+          logo_url: formData.logo_url || undefined
+        });
         toast({ title: "Berhasil", description: "Skill berhasil ditambahkan." });
       }
       setIsModalOpen(false);
@@ -172,6 +198,7 @@ export default function SkillList() {
           <p className="text-muted-foreground">Kelola kemampuan dan keahlian teknis Anda.</p>
         </div>
         <div className="flex gap-2">
+            <SkillCategoryManager />
             {selectedIds.length > 0 && (
                 <Button variant="destructive" onClick={handleBulkDelete}>
                     <Trash2 className="mr-2 h-4 w-4" /> Hapus ({selectedIds.length})
@@ -261,23 +288,28 @@ export default function SkillList() {
             <div className="space-y-2">
               <Label htmlFor="category">Kategori</Label>
               <Select 
-                value={formData.category} 
-                onValueChange={(val) => setFormData({...formData, category: val})}
+                value={formData.categoryId !== null ? String(formData.categoryId) : undefined}
+                onValueChange={(val) => setFormData({...formData, categoryId: Number(val)})}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Pilih Kategori" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Frontend">Frontend Development</SelectItem>
-                  <SelectItem value="Backend">Backend Development</SelectItem>
-                  <SelectItem value="Fullstack">Fullstack</SelectItem>
-                  <SelectItem value="DevOps">DevOps & Cloud</SelectItem>
-                  <SelectItem value="Mobile">Mobile App</SelectItem>
-                  <SelectItem value="UI/UX">UI/UX Design</SelectItem>
-                  <SelectItem value="Database">Database</SelectItem>
-                  <SelectItem value="Tools">Tools & Others</SelectItem>
+                  {categories.map((c: any) => (
+                    <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="logo_url">Logo URL</Label>
+              <Input
+                id="logo_url"
+                value={formData.logo_url}
+                onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
+                placeholder="https://cdn.example.com/logos/react.png"
+              />
             </div>
 
             <div className="space-y-2">

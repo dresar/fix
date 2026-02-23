@@ -1,14 +1,15 @@
 import { motion } from 'framer-motion';
-import { GraduationCap, Calendar, Award, Image as ImageIcon, FileText, Loader2 } from 'lucide-react';
+import { GraduationCap, Calendar, Award, Image as ImageIcon, FileText, Loader2, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useEducation } from '@/hooks/useEducation';
 import { useModalStore } from '@/store/modalStore';
 import { ShinyButton } from '@/components/effects/Buttons';
+import { Button } from '@/components/ui/button';
 import { useEffect, useState, useRef } from 'react';
 
 export const EducationSection = () => {
   const { t } = useTranslation();
-  const { openEducationGalleryModal, openEducationDocumentModal } = useModalStore();
+  const { openEducationGalleryModal, openEducationDocumentModal, openEducationDetailModal } = useModalStore();
   const { education = [], isLoading } = useEducation();
   const [isMobile, setIsMobile] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -107,15 +108,20 @@ export const EducationSection = () => {
                   className="w-[85vw] max-w-[350px] flex-shrink-0"
                 >
                   <motion.div
-                    className="glass-strong rounded-2xl p-5 hover:glow-primary transition-all duration-300 h-full flex flex-col border border-border/50 dark:bg-card/50 bg-white shadow-sm hover:shadow-md"
+                    className="glass-strong rounded-2xl p-5 hover:glow-primary transition-all duration-300 h-full flex flex-col border border-border/50 dark:bg-card/50 bg-white shadow-sm hover:shadow-md cursor-pointer group"
+                    onClick={() => openEducationDetailModal(edu)}
                   >
                      {/* Header */}
                     <div className="flex items-start gap-3 mb-3">
                       <div className="p-2.5 rounded-xl bg-primary/10 shrink-0">
-                        <GraduationCap className="w-5 h-5 text-primary" />
+                         {edu.logo ? (
+                            <img src={edu.logo} alt="Logo" className="w-5 h-5 object-contain" />
+                         ) : (
+                            <GraduationCap className="w-5 h-5 text-primary" />
+                         )}
                       </div>
                       <div className="min-w-0">
-                        <h3 className="text-lg font-heading font-bold mb-1 leading-tight line-clamp-2">{edu.institution}</h3>
+                        <h3 className="text-lg font-heading font-bold mb-1 leading-tight line-clamp-2 group-hover:text-primary transition-colors">{edu.institution}</h3>
                         <p className="text-primary text-sm font-medium line-clamp-1">{edu.degree}</p>
                       </div>
                     </div>
@@ -138,25 +144,27 @@ export const EducationSection = () => {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex flex-wrap gap-2 pt-3 border-t border-border mt-auto">
-                      {edu.gallery && (typeof edu.gallery === 'string' ? JSON.parse(edu.gallery).length > 0 : edu.gallery.length > 0) && (
-                        <ShinyButton
-                          onClick={() => openEducationGalleryModal(edu)}
-                          className="text-[10px] px-3 py-1.5 h-7"
-                        >
-                          <ImageIcon className="w-3 h-3 mr-1.5" />
-                          {t('education.gallery')}
-                        </ShinyButton>
-                      )}
-                      {edu.attachments && (typeof edu.attachments === 'string' ? JSON.parse(edu.attachments).length > 0 : edu.attachments.length > 0) && (
-                        <ShinyButton
-                          onClick={() => openEducationDocumentModal(Array.isArray(edu.attachments) ? edu.attachments[0] : JSON.parse(edu.attachments)[0], 'Document')}
-                          className="text-[10px] px-3 py-1.5 h-7"
-                        >
-                          <FileText className="w-3 h-3 mr-1.5" />
-                          {t('education.docs')}
-                        </ShinyButton>
-                      )}
+                    <div className="flex flex-wrap gap-2 pt-3 border-t border-border mt-auto justify-between items-center">
+                      <div className="flex gap-2">
+                        {edu.gallery && (typeof edu.gallery === 'string' ? JSON.parse(edu.gallery).length > 0 : edu.gallery.length > 0) && (
+                            <div className="text-[10px] px-2 py-1 bg-secondary rounded flex items-center gap-1 text-muted-foreground">
+                                <ImageIcon className="w-3 h-3" />
+                                {t('education.gallery')}
+                            </div>
+                        )}
+                      </div>
+                      
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="h-7 text-xs px-2 hover:bg-primary/10 hover:text-primary ml-auto"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            openEducationDetailModal(edu);
+                        }}
+                      >
+                        {t('common.details')} <ArrowRight className="w-3 h-3 ml-1" />
+                      </Button>
                     </div>
                   </motion.div>
                 </div>
@@ -172,14 +180,21 @@ export const EducationSection = () => {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
               >
-                <div className="glass-strong rounded-2xl p-5 hover:glow-primary transition-all duration-300 h-full flex flex-col border border-border/50 dark:bg-card/50 bg-white shadow-sm hover:shadow-md">
+                <div 
+                    className="glass-strong rounded-2xl p-5 hover:glow-primary transition-all duration-300 h-full flex flex-col border border-border/50 dark:bg-card/50 bg-white shadow-sm hover:shadow-md cursor-pointer group"
+                    onClick={() => openEducationDetailModal(edu)}
+                >
                   {/* Header */}
                   <div className="flex items-start gap-3 mb-3">
                     <div className="p-2.5 rounded-xl bg-primary/10 shrink-0">
-                      <GraduationCap className="w-5 h-5 text-primary" />
+                       {edu.logo ? (
+                          <img src={edu.logo} alt="Logo" className="w-5 h-5 object-contain" />
+                       ) : (
+                          <GraduationCap className="w-5 h-5 text-primary" />
+                       )}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-lg font-heading font-bold mb-1 leading-tight line-clamp-2">{edu.institution}</h3>
+                      <h3 className="text-lg font-heading font-bold mb-1 leading-tight line-clamp-2 group-hover:text-primary transition-colors">{edu.institution}</h3>
                       <p className="text-primary text-sm font-medium line-clamp-1">{edu.degree}</p>
                     </div>
                   </div>
@@ -202,26 +217,28 @@ export const EducationSection = () => {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex flex-wrap gap-2 pt-3 border-t border-border mt-auto">
-                    {edu.gallery && (typeof edu.gallery === 'string' ? JSON.parse(edu.gallery).length > 0 : edu.gallery.length > 0) && (
-                      <ShinyButton
-                        onClick={() => openEducationGalleryModal(edu)}
-                        className="text-[10px] px-3 py-1.5 h-7"
+                  <div className="flex flex-wrap gap-2 pt-3 border-t border-border mt-auto justify-between items-center">
+                      <div className="flex gap-2">
+                        {edu.gallery && (typeof edu.gallery === 'string' ? JSON.parse(edu.gallery).length > 0 : edu.gallery.length > 0) && (
+                            <div className="text-[10px] px-2 py-1 bg-secondary rounded flex items-center gap-1 text-muted-foreground">
+                                <ImageIcon className="w-3 h-3" />
+                                {t('education.gallery')}
+                            </div>
+                        )}
+                      </div>
+                      
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="h-7 text-xs px-2 hover:bg-primary/10 hover:text-primary ml-auto"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            openEducationDetailModal(edu);
+                        }}
                       >
-                        <ImageIcon className="w-3 h-3 mr-1.5" />
-                        {t('education.gallery')}
-                      </ShinyButton>
-                    )}
-                    {edu.attachments && (typeof edu.attachments === 'string' ? JSON.parse(edu.attachments).length > 0 : edu.attachments.length > 0) && (
-                      <ShinyButton
-                        onClick={() => openEducationDocumentModal(Array.isArray(edu.attachments) ? edu.attachments[0] : JSON.parse(edu.attachments)[0], 'Document')}
-                        className="text-[10px] px-3 py-1.5 h-7"
-                      >
-                        <FileText className="w-3 h-3 mr-1.5" />
-                        {t('education.docs')}
-                      </ShinyButton>
-                    )}
-                  </div>
+                        {t('common.details')} <ArrowRight className="w-3 h-3 ml-1" />
+                      </Button>
+                    </div>
                 </div>
               </motion.div>
             )))}

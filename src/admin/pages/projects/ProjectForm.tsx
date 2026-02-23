@@ -132,7 +132,15 @@ export default function ProjectForm() {
         });
         
         if (project.summaries) {
-            setSummaries(project.summaries);
+            try {
+                const parsedSummaries = typeof project.summaries === 'string' 
+                    ? JSON.parse(project.summaries) 
+                    : project.summaries;
+                setSummaries(Array.isArray(parsedSummaries) ? parsedSummaries : []);
+            } catch (e) {
+                console.error("Failed to parse summaries", e);
+                setSummaries([]);
+            }
         }
       }
     } catch (error) {
@@ -149,12 +157,13 @@ export default function ProjectForm() {
     try {
       // Format tech to array if needed by backend, but our schema update handles string/array
       // Let's keep it as string in form and backend parses it if needed or we send array
-      // Backend schema expects string or array. Let's send array for tech.
+      // Backend schema expects string (JSON stringified) for tech and gallery
+      // And we must NOT send 'summaries' as it's not a column in projects table
       const formattedData = {
         ...data,
-        tech: data.tech ? data.tech.split(',').map(t => t.trim()).filter(Boolean) : [],
-        gallery: JSON.parse(data.gallery || '[]'),
-        summaries: summaries
+        tech: JSON.stringify(data.tech ? data.tech.split(',').map(t => t.trim()).filter(Boolean) : []),
+        gallery: data.gallery || '[]', // It's already a JSON string from the form
+        summaries: JSON.stringify(summaries),
       };
 
       let projectId = Number(id);
@@ -512,7 +521,7 @@ export default function ProjectForm() {
                                                     if(!summary.id) return;
                                                     if (id) {
                                                         try {
-                                                            await api.projects.deleteSummary(summary.id);
+                                                            await api.projects.deleteSummary(Number(id), summary.id);
                                                         } catch (e) { console.error(e); }
                                                     }
                                                     setSummaries(prev => prev.filter(s => s.id !== summary.id));

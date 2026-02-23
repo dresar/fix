@@ -56,7 +56,6 @@ export function AIGenerateModal({ isOpen, onClose, onGenerate, contextData }: AI
       onClose();
       toast({ title: "Berhasil", description: "Deskripsi berhasil dibuat oleh AI." });
     } catch (error) {
-      console.error(error);
       toast({ variant: "destructive", title: "Gagal", description: "Gagal men-generate konten." });
     } finally {
       setIsLoading(false);

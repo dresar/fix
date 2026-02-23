@@ -181,6 +181,7 @@ export interface Skill {
   category_id?: number;
   proficiency: number; // 0-100
   icon_url?: string;
+  logo_url?: string;
   is_featured: boolean;
   sort_order: number;
   category?: SkillCategory; // Joined

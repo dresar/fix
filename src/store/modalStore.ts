@@ -1,21 +1,20 @@
 import { create } from 'zustand';
 import type { Project, Education, Certificate } from '@/types';
 
-export type ModalType = 'project' | 'education-gallery' | 'education-document' | 'certificate' | 'experience-gallery' | null;
+export type ModalType = 'education-gallery' | 'education-document' | 'education-detail' | 'certificate' | 'experience-gallery' | null;
 
 interface ModalState {
   isOpen: boolean;
   modalType: ModalType;
-  projectData: Project | null;
   educationData: Education | null;
   experienceData: any | null;
   documentUrl: string | null;
   documentTitle: string | null;
   certificateData: Certificate | null;
   
-  openProjectModal: (project: Project) => void;
   openEducationGalleryModal: (education: Education) => void;
   openEducationDocumentModal: (url: string, title: string) => void;
+  openEducationDetailModal: (education: Education) => void;
   openCertificateModal: (certificate: Certificate) => void;
   openExperienceGalleryModal: (experience: any) => void;
   closeModal: () => void;
@@ -24,18 +23,11 @@ interface ModalState {
 export const useModalStore = create<ModalState>((set) => ({
   isOpen: false,
   modalType: null,
-  projectData: null,
   educationData: null,
   experienceData: null,
   documentUrl: null,
   documentTitle: null,
   certificateData: null,
-
-  openProjectModal: (project) => set({
-    isOpen: true,
-    modalType: 'project',
-    projectData: project,
-  }),
 
   openEducationGalleryModal: (education) => set({
     isOpen: true,
@@ -48,6 +40,12 @@ export const useModalStore = create<ModalState>((set) => ({
     modalType: 'education-document',
     documentUrl: url,
     documentTitle: title,
+  }),
+
+  openEducationDetailModal: (education) => set({
+    isOpen: true,
+    modalType: 'education-detail',
+    educationData: education,
   }),
 
   openCertificateModal: (certificate) => set({
@@ -65,7 +63,6 @@ export const useModalStore = create<ModalState>((set) => ({
   closeModal: () => set({
     isOpen: false,
     modalType: null,
-    projectData: null,
     educationData: null,
     experienceData: null,
     documentUrl: null,

@@ -10,7 +10,6 @@ export const generateAIContent = async (prompt: string, systemPrompt: string = "
 
     return response.content || response.result || response;
   } catch (error) {
-    console.error("AI Generation Error:", error);
     throw error;
   }
 };

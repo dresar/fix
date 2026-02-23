@@ -1,8 +1,22 @@
-import { Pool } from 'pg';
-import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import ws from 'ws';
+
+// Robust WebSocket configuration for Neon
+try {
+  // Handle different import scenarios for ws
+  if (ws && typeof ws !== 'function' && (ws as any).WebSocket) {
+     neonConfig.webSocketConstructor = (ws as any).WebSocket;
+  } else {
+     neonConfig.webSocketConstructor = ws;
+  }
+} catch (e) {
+  console.error('Failed to configure WebSocket for Neon:', e);
+}
+
 import { 
   pgTable, serial, text, boolean, timestamp, integer, 
-  pgEnum 
+  pgEnum, varchar
 } from 'drizzle-orm/pg-core';
 import { relations, sql, eq, desc, asc, and, like, ilike, inArray } from 'drizzle-orm';
 import * as dotenv from 'dotenv';
@@ -49,18 +63,43 @@ const getPool = () => {
     const DB_URL = process.env.DATABASE_URL;
     if (!DB_URL) {
       console.warn('DATABASE_URL is not defined in API init');
+    } else {
+       // console.log(`[${new Date().toISOString()}] DATABASE_URL found: ${DB_URL.substring(0, 15)}...`);
     }
     
     // Enhanced configuration for Neon
     const isNeon = DB_URL && DB_URL.includes('neon.tech');
+
+    let normalizedUrl = DB_URL;
+    try {
+      const u = new URL(DB_URL as string);
+      // Remove unsupported channel binding for Node pg
+      u.searchParams.delete('channel_binding');
+      // Ensure libpq compatibility and SSL required
+      if (!u.searchParams.has('uselibpqcompat')) u.searchParams.set('uselibpqcompat', 'true');
+      if (!u.searchParams.has('sslmode')) u.searchParams.set('sslmode', 'require');
+      normalizedUrl = u.toString();
+    } catch {
+      // Fallback if URL parsing fails: append compat flags safely
+      const hasQuery = (DB_URL || '').includes('?');
+      const sep = hasQuery ? '&' : '?';
+      normalizedUrl = `${DB_URL}${sep}uselibpqcompat=true&sslmode=require`;
+    }
     
     pool = new Pool({
-      connectionString: DB_URL ? (DB_URL + (DB_URL.includes('sslmode') ? '' : '?sslmode=require')) : undefined,
-      connectionTimeoutMillis: 60000, // 60s timeout for cold starts
-      idleTimeoutMillis: 10000,       // Close idle connections faster to free up slots
-      max: 5,                         // Conservative limit for Neon Free Tier
-      keepAlive: true,                // Enable TCP Keep-Alive
-      ssl: isNeon ? { rejectUnauthorized: false } : undefined 
+      connectionString: normalizedUrl,
+      connectionTimeoutMillis: 60000,
+      idleTimeoutMillis: 10000,
+      max: 5,
+      keepAlive: true,
+      ssl: isNeon ? { rejectUnauthorized: false } : undefined
+    });
+    
+    pool.query('SELECT 1').then(() => {
+      // ok
+    }).catch((err) => {
+      console.error('DB connectivity check failed:', err?.code || err?.message || err);
+      process.env.MOCK_DB = process.env.MOCK_DB || 'true';
     });
     
     pool.on('error', (err) => {
@@ -130,6 +169,7 @@ export const projects = pgTable('project', {
   tech: text('tech').default('[]').notNull(),
   categoryId: integer('categoryId').references(() => projectCategories.id),
   gallery: text('gallery').default('[]').notNull(),
+  summaries: text('summaries').default('[]').notNull(),
   is_published: boolean('is_published').default(true).notNull(),
   order: integer('order').default(0).notNull(),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
@@ -207,6 +247,7 @@ export const skillCategories = pgTable('skill_category', {
   id: serial('id').primaryKey(),
   name: text('name').unique().notNull(),
   slug: text('slug').unique().notNull(),
+  order: integer('order').default(0).notNull(),
 });
 
 export const skills = pgTable('skill', {
@@ -214,6 +255,7 @@ export const skills = pgTable('skill', {
   name: text('name').notNull(),
   percentage: integer('percentage').default(0).notNull(),
   categoryId: integer('categoryId').references(() => skillCategories.id),
+  logo_url: varchar('logo_url', { length: 500 }),
 });
 
 export const skillRelations = relations(skills, ({ one }) => ({
@@ -346,6 +388,7 @@ const getDb = () => {
 let didEnsureSchema = false;
 const ensureSchema = async () => {
     if (didEnsureSchema) return;
+    if (process.env.MOCK_DB === 'true') { didEnsureSchema = true; return; }
     try {
         const client = await getPool().connect();
         try {
@@ -353,12 +396,30 @@ const ensureSchema = async () => {
             await client.query(`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS "cdn_url" text`);
             await client.query(`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS "maintenance_end_time" timestamp`);
             await client.query(`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS "ai_provider" text`);
+            await client.query(`ALTER TABLE skill ADD COLUMN IF NOT EXISTS "logo_url" varchar(500)`);
+            await client.query(`ALTER TABLE skill_category ADD COLUMN IF NOT EXISTS "order" integer DEFAULT 0`);
+            await client.query(`ALTER TABLE project ADD COLUMN IF NOT EXISTS "summaries" text DEFAULT '[]'`);
         } finally {
             client.release();
         }
         didEnsureSchema = true;
-    } catch (e) {
-        console.error('Schema ensure failed:', e);
+    } catch (e: any) {
+        console.error('Schema ensure failed (FULL ERROR):', e);
+        if (e?.message?.includes('toLowerCase') || e?.stack?.includes('toLowerCase')) {
+             console.error('!!! DETECTED toLowerCase ERROR !!!');
+             console.error('This usually means a connection string or SSL configuration issue with Neon/Postgres.');
+             console.error('DB_URL Status:', process.env.DATABASE_URL ? 'Defined (Length: ' + process.env.DATABASE_URL.length + ')' : 'Undefined');
+        }
+        // Log error to file for debugging
+        /*
+        try {
+            const fs = await import('fs');
+            fs.appendFileSync('db-connection.log', `[${new Date().toISOString()}] Schema ensure failed: ${e?.message || e}\nStack: ${e?.stack}\n`);
+        } catch (err) { }
+        */
+        
+        process.env.MOCK_DB = process.env.MOCK_DB || 'true';
+        didEnsureSchema = true;
     }
 };
 
@@ -706,11 +767,58 @@ export default async function handler(req: any, res: any) {
 
     // Projects: Summaries (Sub-resource)
     if (resourceName === 'projects' && subResource === 'summaries') {
-        // Mock implementation for summaries as they might be stored in a separate table not defined yet or just JSON
-        // The schema 'projects' has no 'summaries' table relation defined in my file above.
-        // Assuming it's a separate table I missed or just a mock needed.
-        // I'll return success to unblock frontend.
-        return sendJSON(res, 200, { success: true, message: "Summary created (mock)" });
+        const projectId = Number(id);
+        if (!projectId) return sendJSON(res, 400, { error: 'Project ID required' });
+
+        try {
+            const [project] = await getDb().select().from(projects).where(eq(projects.id, projectId));
+            if (!project) return sendJSON(res, 404, { error: 'Project not found' });
+
+            let currentSummaries: any[] = [];
+            try {
+                currentSummaries = JSON.parse(project.summaries || '[]');
+            } catch (e) {
+                currentSummaries = [];
+            }
+
+            if (req.method === 'POST') {
+                const body = await parseBody(req);
+                const newSummary = {
+                    id: Date.now(),
+                    content: body.content,
+                    variant: body.variant || 'Standard',
+                    createdAt: new Date().toISOString()
+                };
+                const updatedSummaries = [newSummary, ...currentSummaries];
+                
+                await getDb().update(projects)
+                    .set({ summaries: JSON.stringify(updatedSummaries), updatedAt: new Date() })
+                    .where(eq(projects.id, projectId));
+                    
+                return sendJSON(res, 200, newSummary);
+            }
+
+            if (req.method === 'DELETE') {
+                const pathParts = urlObj.pathname.split('/').filter(p => p && p !== 'api');
+                // Expected: /projects/:id/summaries/:summaryId
+                const summaryId = Number(pathParts[3]); 
+                
+                if (!summaryId) return sendJSON(res, 400, { error: 'Summary ID required' });
+                
+                const updatedSummaries = currentSummaries.filter((s: any) => s.id !== summaryId);
+                
+                await getDb().update(projects)
+                    .set({ summaries: JSON.stringify(updatedSummaries), updatedAt: new Date() })
+                    .where(eq(projects.id, projectId));
+                    
+                return sendJSON(res, 200, { success: true });
+            }
+        } catch (error: any) {
+            console.error('Summaries Error:', error);
+            return sendJSON(res, 500, { error: 'Failed to process summary' });
+        }
+        
+        return sendJSON(res, 405, { error: 'Method not allowed' });
     }
 
     // Auth
@@ -1009,10 +1117,11 @@ export default async function handler(req: any, res: any) {
       'projects', 'project-categories', 
       'blog-posts', 'blog-categories',
       'skills', 'skill-categories',
-      'experience', 
+      'experience', 'education',
       'certificates', 'certificate-categories',
       'social-links', 'profile', 'settings',
-      'home-content', 'about-content'
+      'home-content', 'about-content',
+      'wa-templates'
     ];
 
     // --- CACHING MIDDLEWARE (Vercel Edge Cache) ---
@@ -1043,6 +1152,12 @@ export default async function handler(req: any, res: any) {
       return sendJSON(res, 404, { error: `Resource '${resourceName}' not found` });
     }
 
+    const requiresAuthForGet = !publicResources.includes(resourceName) && req.method === 'GET';
+    const requiresAuthForMutation = req.method !== 'GET';
+    if ((requiresAuthForGet || requiresAuthForMutation) && !hasAuthHeader) {
+      return sendJSON(res, 403, { error: 'Forbidden' });
+    }
+
     // Handle Bulk Delete
     if (action === 'bulk' && req.method === 'DELETE') {
         const body = await parseBody(req);
@@ -1065,6 +1180,21 @@ export default async function handler(req: any, res: any) {
         // resourceName 'project-categories' -> query key 'projectCategories'
         const queryKey = resourceName.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
         
+        if (action === 'by_slug') {
+             const slug = query.slug as string;
+             if (!slug) return sendJSON(res, 400, { error: 'Slug required' });
+             
+             if (!('slug' in table)) return sendJSON(res, 400, { error: 'Resource does not support slug' });
+
+             const item = await getDb().query[queryKey]?.findFirst({
+                where: eq((table as any).slug, slug),
+                with: relationMap[resourceName]
+             });
+             
+             if (!item) return sendJSON(res, 404, { error: 'Not found' });
+             return sendJSON(res, 200, item);
+        }
+
         if (id) {
           // Get One
           const item = await getDb().query[queryKey]?.findFirst({
@@ -1115,8 +1245,15 @@ export default async function handler(req: any, res: any) {
           let data;
           
           if (dbQuery) {
+             let orderByClause: any = desc(table.id);
+             
+             // Custom sorting
+             if ((resourceName === 'skill-categories' || resourceName === 'project-categories' || resourceName === 'projects') && 'order' in table) {
+                 orderByClause = [asc((table as any).order), asc(table.id)];
+             }
+
              data = await withRetry(() => dbQuery.findMany({
-                orderBy: desc(table.id),
+                orderBy: orderByClause,
                 limit: limit,
                 offset: offset,
                 with: relationMap[resourceName]
@@ -1132,9 +1269,9 @@ export default async function handler(req: any, res: any) {
 
       case 'POST':
         const createBodyRaw = await parseBody(req);
-        console.log(`[DEBUG] Create ${resourceName} Raw Body:`, JSON.stringify(createBodyRaw));
+        // console.log(`[DEBUG] Create ${resourceName} Raw Body:`, JSON.stringify(createBodyRaw));
         const createBody = processBodyDates(createBodyRaw);
-        console.log(`[DEBUG] Create ${resourceName} Processed Body:`, JSON.stringify(createBody));
+        // console.log(`[DEBUG] Create ${resourceName} Processed Body:`, JSON.stringify(createBody));
         {
           const singletonResources = ['profile', 'settings', 'home-content', 'about-content'];
           if (singletonResources.includes(resourceName)) {
@@ -1179,9 +1316,9 @@ export default async function handler(req: any, res: any) {
       case 'PATCH':
         if (!id) return sendJSON(res, 400, { error: 'ID required for update' });
         const updateBodyRaw = await parseBody(req);
-        console.log(`[DEBUG] Update ${resourceName} ID ${id} Raw Body:`, JSON.stringify(updateBodyRaw));
+        // console.log(`[DEBUG] Update ${resourceName} ID ${id} Raw Body:`, JSON.stringify(updateBodyRaw));
         const updateBody = processBodyDates(updateBodyRaw);
-        console.log(`[DEBUG] Update ${resourceName} ID ${id} Processed Body:`, JSON.stringify(updateBody));
+        // console.log(`[DEBUG] Update ${resourceName} ID ${id} Processed Body:`, JSON.stringify(updateBody));
         
         try {
             const updateSet: any = { ...updateBody };

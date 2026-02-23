@@ -1,8 +1,15 @@
+import { useEffect } from 'react';
 import { useSettings } from '@/hooks/useSettings';
 import Maintenance from '@/pages/Maintenance';
 
 const MaintenanceGuard = ({ children }: { children: React.ReactNode }) => {
-  const { settings, isLoading: settingsLoading } = useSettings();
+  const { settings, isLoading: settingsLoading, error } = useSettings();
+
+  useEffect(() => {
+    if (error) {
+      console.warn('Failed to fetch site settings:', error);
+    }
+  }, [error]);
 
   if (settingsLoading) {
      return (

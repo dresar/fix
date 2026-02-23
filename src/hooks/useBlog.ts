@@ -26,7 +26,7 @@ export function useBlogPosts() {
 export function useBlogPostBySlug(slug: string) {
   return useQuery({
     queryKey: ['blog-post', slug],
-    queryFn: () => blogPostsAPI.getOne(slug),
+    queryFn: () => blogPostsAPI.getBySlug(slug),
     enabled: !!slug,
   });
 }

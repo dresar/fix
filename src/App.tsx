@@ -9,10 +9,10 @@ import { Loader2 } from "lucide-react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeApplicator } from "@/components/effects/ThemeApplicator";
 import MaintenanceGuard from "@/components/MaintenanceGuard";
-import { Preloader } from "@/components/ui/Preloader";
 import { dataManager } from "@/services/dataManager";
 import { FloatingWhatsApp } from '@/components/effects/FloatingWhatsApp';
 import { ScrollToTop } from '@/components/effects/ScrollToTop';
+import { ScrollRestoration } from '@/components/effects/ScrollRestoration';
 
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
@@ -102,12 +102,10 @@ const App = () => {
           <Toaster />
           <Sonner />
           
-          {/* Preloader removed to prevent blocking UI on slow connections */}
-          {/* {isLoading && <Preloader />} */}
-
           <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <ScrollRestoration />
             <ErrorBoundary>
-              <Suspense fallback={null}> {/* Fallback handled by Preloader initially */}
+              <Suspense fallback={null}> 
                 <Routes>
                   {/* Admin Routes (Outside Maintenance Guard) */}
                   <Route path="/admin/login" element={<LoginPage />} />

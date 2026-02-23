@@ -36,6 +36,8 @@
       "title": "Featured Projects",
       "subtitle": "Some of the best work I've done",
       "ai_summary": "AI Insight",
+      "viewed_summary": "AI Insight (Viewed)",
+      "ai_generated": "AI Generated",
       "viewDetails": "Detail",
       "no_thumbnail": "No thumbnail",
       "all_projects": "All Projects"
@@ -60,6 +62,7 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
+    "details": "Detail",
     "present": "Present",
     "previous": "Previous",
     "next": "Next",
