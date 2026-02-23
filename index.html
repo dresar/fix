@@ -14,6 +14,18 @@
     <meta property="og:type" content="website" />
     
     <meta name="twitter:card" content="summary_large_image" />
+    <script>
+      (function () {
+        var host = location.hostname || '';
+        var isProd = /etech\.my\.id$/i.test(host);
+        if (isProd) {
+          var methods = ['log','warn','error','info','debug','trace'];
+          for (var i=0;i<methods.length;i++){
+            try { console[methods[i]] = function(){}; } catch(e) {}
+          }
+        }
+      })();
+    </script>
   </head>
 
   <body>

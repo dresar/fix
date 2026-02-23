@@ -66,14 +66,12 @@ apiClient.interceptors.response.use(
     
     // Handle Network Errors (Connection Refused, etc.) - DO NOT LOGOUT
     if (!error.response) {
-        console.error('Network Error:', error.message);
-        // We don't logout here, so user stays on the page but sees an error
         return Promise.reject(error);
     }
 
     // Handle Global Errors
     if (error.response?.status === 500) {
-      console.error('Server Error:', error.response.data);
+      // swallow console logs in production
     }
     
     return Promise.reject(error);
