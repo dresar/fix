@@ -39,7 +39,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.svg', 'robots.txt'],
       workbox: {
         globPatterns: ['**/*.{html,ico,png,svg,css}'],
         navigateFallbackDenylist: [/^\/admin\/.*/],
@@ -75,11 +75,6 @@ export default defineConfig(({ mode }) => ({
         description: 'My Professional Portfolio',
         theme_color: '#ffffff',
         icons: [
-          {
-            src: 'apple-touch-icon.png',
-            sizes: '180x180',
-            type: 'image/png'
-          },
           {
             src: 'favicon.svg',
             sizes: 'any',
