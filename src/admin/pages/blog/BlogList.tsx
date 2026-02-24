@@ -17,7 +17,9 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckSquare,
-  Square
+  Square,
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
@@ -40,16 +42,18 @@ export default function BlogList() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [deleteAlert, setDeleteAlert] = useState<{
     isOpen: boolean;
     id?: number;
     isBulk?: boolean;
   }>({ isOpen: false });
 
-  const { data: posts = [] } = useQuery({
+  const { data: posts = [], isFetching } = useQuery({
     queryKey: ['blog-posts'],
-    queryFn: api.blog.posts.getAll,
-    // Stale time handled globally in App.tsx (Infinity)
+    queryFn: api.blogPosts.getAll,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
   });
 
   const { data: categories = [] } = useQuery({
@@ -104,42 +108,48 @@ export default function BlogList() {
   };
 
   const confirmDelete = async () => {
+    setIsDeleting(true);
     try {
       if (deleteAlert.isBulk) {
-        await api.blog.posts.bulkDelete(selectedIds);
+        await api.blogPosts.bulkDelete(selectedIds);
         toast({ title: "Berhasil", description: `${selectedIds.length} artikel dihapus.` });
         setSelectedIds([]);
       } else if (deleteAlert.id) {
-        await api.blog.posts.delete(deleteAlert.id);
+        await api.blogPosts.delete(deleteAlert.id);
         toast({ title: "Berhasil", description: "Artikel dihapus." });
       }
-      queryClient.invalidateQueries({ queryKey: ['blog-posts'] });
+      await queryClient.invalidateQueries({ queryKey: ['blog-posts'] });
     } catch (error) {
-      toast({ variant: "destructive", title: "Gagal", description: "Gagal menghapus data." });
+      toast({ variant: "destructive", title: "Gagal", description: "Gagal menghapus artikel." });
     } finally {
+      setIsDeleting(false);
       setDeleteAlert({ isOpen: false });
     }
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Blog & Artikel</h2>
-          <p className="text-muted-foreground">Kelola konten artikel, tutorial, dan berita.</p>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            Artikel Blog
+            {isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          </h1>
+          <p className="text-muted-foreground">Kelola artikel dan konten blog Anda.</p>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-             {selectedIds.length > 0 && (
-                <Button variant="destructive" onClick={handleBulkDelete}>
-                    <Trash2 className="mr-2 h-4 w-4" /> Hapus ({selectedIds.length})
+        <div className="flex gap-2 items-center">
+            {selectedIds.length > 0 && (
+                <Button variant="destructive" size="sm" onClick={handleBulkDelete} disabled={isDeleting}>
+                    {isDeleting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                    Hapus ({selectedIds.length})
                 </Button>
             )}
-             <Button variant="outline" onClick={toggleSelectAll}>
-                {filteredPosts.length > 0 && selectedIds.length === filteredPosts.length ? <CheckSquare className="mr-2 h-4 w-4" /> : <Square className="mr-2 h-4 w-4" />}
-                {filteredPosts.length > 0 && selectedIds.length === filteredPosts.length ? 'Batal Pilih' : 'Pilih Semua'}
-             </Button>
+            <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ['blog-posts'] })} disabled={isFetching}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+                Refresh
+            </Button>
             <Button onClick={() => navigate('/admin/blog/new')}>
-            <Plus className="mr-2 h-4 w-4" /> Tulis Artikel Baru
+              <Plus className="mr-2 h-4 w-4" /> Tulis Artikel
             </Button>
         </div>
       </div>

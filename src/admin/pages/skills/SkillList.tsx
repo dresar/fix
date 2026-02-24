@@ -25,7 +25,9 @@ import {
   Globe,
   MoreVertical,
   CheckSquare,
-  Square 
+  Square,
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ModernLoader } from '@/components/ui/ModernLoader';
@@ -73,10 +75,11 @@ export default function SkillList() {
     logo_url: ''
   });
 
-  const { data: skills = [] } = useQuery({
+  const { data: skills = [], isLoading: isSkillLoading, isFetching } = useQuery({
     queryKey: ['skills'],
     queryFn: api.skills.getAll,
-    // Stale time handled globally in App.tsx (Infinity)
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
   });
 
   const { data: categories = [] } = useQuery({
@@ -86,6 +89,8 @@ export default function SkillList() {
 
   // Removed loader
   // const isLoading = isSkillLoading;
+  
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const toggleSelectAll = () => {
     if (selectedIds.length === skills.length) {
@@ -108,6 +113,7 @@ export default function SkillList() {
   };
 
   const confirmDelete = async () => {
+    setIsDeleting(true);
     try {
       if (deleteAlert.isBulk) {
         await api.skills.bulkDelete(selectedIds);
@@ -122,10 +128,11 @@ export default function SkillList() {
         // Wait, line 147 in Read output says `loadSkills();`. But I don't see `loadSkills` defined in the file snippet I read.
         // It uses `useQuery` now. So `queryClient.invalidateQueries` is correct.
       }
-      queryClient.invalidateQueries({ queryKey: ['skills'] });
+      await queryClient.invalidateQueries({ queryKey: ['skills'] });
     } catch (error) {
       toast({ variant: "destructive", title: "Gagal", description: "Gagal menghapus data." });
     } finally {
+      setIsDeleting(false);
       setDeleteAlert({ isOpen: false });
     }
   };
@@ -192,19 +199,27 @@ export default function SkillList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Skills</h2>
-          <p className="text-muted-foreground">Kelola kemampuan dan keahlian teknis Anda.</p>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            Skill
+            {isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          </h1>
+          <p className="text-muted-foreground">Kelola daftar keahlian Anda.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
             <SkillCategoryManager />
             {selectedIds.length > 0 && (
-                <Button variant="destructive" onClick={handleBulkDelete}>
-                    <Trash2 className="mr-2 h-4 w-4" /> Hapus ({selectedIds.length})
+                <Button variant="destructive" size="sm" onClick={handleBulkDelete} disabled={isDeleting}>
+                    {isDeleting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                    Hapus ({selectedIds.length})
                 </Button>
             )}
-            <Button variant="outline" onClick={toggleSelectAll}>
+            <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ['skills'] })} disabled={isFetching}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+                Refresh
+            </Button>
+            <Button variant="outline" onClick={toggleSelectAll} disabled={skills.length === 0}>
                 {skills.length > 0 && selectedIds.length === skills.length ? <CheckSquare className="mr-2 h-4 w-4" /> : <Square className="mr-2 h-4 w-4" />}
                 {skills.length > 0 && selectedIds.length === skills.length ? 'Batal Pilih' : 'Pilih Semua'}
             </Button>

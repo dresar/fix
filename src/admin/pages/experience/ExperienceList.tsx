@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { api } from '../../services/api';
-import { Plus, Trash2, Edit, Calendar, MapPin, Briefcase, Image as ImageIcon, Eye, CheckSquare, Square } from 'lucide-react';
+import { Plus, Trash2, Edit, Calendar, MapPin, Briefcase, Image as ImageIcon, Eye, CheckSquare, Square, Loader2, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { ExperienceDetailModal } from './ExperienceDetailModal';
@@ -20,15 +20,18 @@ export default function ExperienceList() {
   const [selectedExperience, setSelectedExperience] = useState<any>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [deleteAlert, setDeleteAlert] = useState<{
     isOpen: boolean;
     id?: number;
     isBulk?: boolean;
   }>({ isOpen: false });
 
-  const { data: experiences = [] } = useQuery({
+  const { data: experiences = [], refetch, isFetching } = useQuery({
     queryKey: ['experience'],
     queryFn: api.experience.getAll,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
   });
 
   const toggleSelectAll = () => {
@@ -56,19 +59,21 @@ export default function ExperienceList() {
   };
 
   const confirmDelete = async () => {
+    setIsDeleting(true);
     try {
       if (deleteAlert.isBulk) {
         await api.experience.bulkDelete(selectedIds);
-        toast({ title: "Berhasil", description: `${selectedIds.length} item dihapus.` });
+        toast({ title: "Berhasil", description: `${selectedIds.length} pengalaman dihapus.` });
         setSelectedIds([]);
       } else if (deleteAlert.id) {
         await api.experience.delete(deleteAlert.id);
-        toast({ title: "Berhasil", description: "Data pengalaman dihapus." });
+        toast({ title: "Berhasil", description: "Pengalaman dihapus." });
       }
-      queryClient.invalidateQueries({ queryKey: ['experience'] });
+      await refetch();
     } catch (error) {
       toast({ variant: "destructive", title: "Gagal", description: "Gagal menghapus data." });
     } finally {
+      setIsDeleting(false);
       setDeleteAlert({ isOpen: false });
     }
   };
@@ -84,21 +89,32 @@ export default function ExperienceList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Pengalaman Kerja</h1>
-        <div className="flex gap-2">
-          {selectedIds.length > 0 && (
-            <Button variant="destructive" onClick={handleBulkDelete}>
-              <Trash2 className="mr-2 h-4 w-4" /> Hapus ({selectedIds.length})
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            Pengalaman
+            {isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          </h1>
+          <p className="text-muted-foreground">Kelola riwayat pengalaman kerja Anda.</p>
+        </div>
+        <div className="flex gap-2 items-center">
+            {selectedIds.length > 0 && (
+                <Button variant="destructive" size="sm" onClick={handleBulkDelete} disabled={isDeleting}>
+                    {isDeleting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                    Hapus ({selectedIds.length})
+                </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+                Refresh
             </Button>
-          )}
-          <Button variant="outline" onClick={toggleSelectAll}>
-            {experiences.length > 0 && selectedIds.length === experiences.length ? <CheckSquare className="mr-2 h-4 w-4" /> : <Square className="mr-2 h-4 w-4" />}
-            {experiences.length > 0 && selectedIds.length === experiences.length ? 'Batal Pilih' : 'Pilih Semua'}
-          </Button>
-          <Button onClick={() => navigate('/admin/experience/new')}>
-            <Plus className="mr-2 h-4 w-4" /> Tambah Pengalaman
-          </Button>
+            <Button variant="outline" onClick={toggleSelectAll} disabled={experiences.length === 0}>
+                {experiences.length > 0 && selectedIds.length === experiences.length ? <CheckSquare className="mr-2 h-4 w-4" /> : <Square className="mr-2 h-4 w-4" />}
+                {experiences.length > 0 && selectedIds.length === experiences.length ? 'Batal Pilih' : 'Pilih Semua'}
+            </Button>
+            <Button onClick={() => navigate('/admin/experience/new')}>
+              <Plus className="mr-2 h-4 w-4" /> Tambah Pengalaman
+            </Button>
         </div>
       </div>
 

@@ -109,7 +109,7 @@ export function CertificateCategoryManager() {
 
     const handleCancelEdit = () => {
         setEditingId(null);
-        form.reset();
+        form.reset({ name: '', slug: '' });
     };
 
     return (

@@ -16,12 +16,17 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckSquare,
-  Square
+  Square,
+  Loader2,
+  RefreshCw,
+  Filter
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ModernLoader } from '@/components/ui/ModernLoader';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
+
+import { CertificateCategoryManager } from "./CertificateCategoryManager";
 
 export default function CertificateList() {
   const queryClient = useQueryClient();
@@ -33,16 +38,18 @@ export default function CertificateList() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [deleteAlert, setDeleteAlert] = useState<{
     isOpen: boolean;
     id?: number;
     isBulk?: boolean;
   }>({ isOpen: false });
 
-  const { data: certificates = [] } = useQuery({
+  const { data: certificates = [], isFetching } = useQuery({
     queryKey: ['certificates'],
     queryFn: api.certificates.getAll,
-    // Stale time handled globally in App.tsx (Infinity)
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
   });
 
   const { data: categories = [] } = useQuery({
@@ -89,6 +96,7 @@ export default function CertificateList() {
   };
 
   const confirmDelete = async () => {
+    setIsDeleting(true);
     try {
       if (deleteAlert.isBulk) {
         await api.certificates.bulkDelete(selectedIds);
@@ -98,10 +106,11 @@ export default function CertificateList() {
         await api.certificates.delete(deleteAlert.id);
         toast({ title: "Berhasil", description: "Sertifikat dihapus." });
       }
-      queryClient.invalidateQueries({ queryKey: ['certificates'] });
+      await queryClient.invalidateQueries({ queryKey: ['certificates'] });
     } catch (error) {
-      toast({ variant: "destructive", title: "Gagal", description: "Gagal menghapus data." });
+      toast({ variant: "destructive", title: "Gagal", description: "Gagal menghapus sertifikat." });
     } finally {
+      setIsDeleting(false);
       setDeleteAlert({ isOpen: false });
     }
   };
@@ -110,14 +119,18 @@ export default function CertificateList() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Sertifikat</h2>
-          <p className="text-muted-foreground">Lisensi & Sertifikasi Profesional.</p>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            Sertifikat
+            {isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          </h1>
+          <p className="text-muted-foreground">Kelola sertifikat dan penghargaan Anda.</p>
         </div>
         
-        <div className="flex gap-2 w-full md:w-auto">
+        <div className="flex gap-2 w-full md:w-auto items-center">
              {selectedIds.length > 0 && (
-                <Button variant="destructive" onClick={handleBulkDelete}>
-                    <Trash2 className="mr-2 h-4 w-4" /> Hapus ({selectedIds.length})
+                <Button variant="destructive" onClick={handleBulkDelete} disabled={isDeleting}>
+                    {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                    Hapus ({selectedIds.length})
                 </Button>
             )}
              <Button variant="outline" onClick={toggleSelectAll}>
@@ -140,6 +153,11 @@ export default function CertificateList() {
                     </SelectContent>
                 </Select>
             </div>
+            <CertificateCategoryManager />
+
+            <Button variant="outline" size="icon" onClick={() => queryClient.invalidateQueries({ queryKey: ['certificates'] })} disabled={isFetching} title="Refresh">
+                <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+            </Button>
 
             <Button onClick={() => navigate('/admin/certificates/new')}>
               <Plus className="mr-2 h-4 w-4" /> Tambah Sertifikat

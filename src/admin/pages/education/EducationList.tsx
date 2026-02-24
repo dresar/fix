@@ -15,7 +15,9 @@ import {
   MoreVertical,
   Award,
   CheckSquare,
-  Square
+  Square,
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
@@ -29,15 +31,18 @@ export default function EducationList() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [deleteAlert, setDeleteAlert] = useState<{
     isOpen: boolean;
     id?: number;
     isBulk?: boolean;
   }>({ isOpen: false });
 
-  const { data: educationList = [], refetch } = useQuery({
+  const { data: educationList = [], refetch, isFetching } = useQuery({
     queryKey: ['education'],
     queryFn: api.education.getAll,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
   });
 
   const toggleSelectAll = () => {
@@ -65,19 +70,21 @@ export default function EducationList() {
   };
 
   const confirmDelete = async () => {
+    setIsDeleting(true);
     try {
       if (deleteAlert.isBulk) {
         await api.education.bulkDelete(selectedIds);
-        toast({ title: "Berhasil", description: `${selectedIds.length} item dihapus.` });
+        toast({ title: "Berhasil", description: `${selectedIds.length} data pendidikan dihapus.` });
         setSelectedIds([]);
       } else if (deleteAlert.id) {
         await api.education.delete(deleteAlert.id);
-        toast({ title: "Berhasil", description: "Data dihapus." });
+        toast({ title: "Berhasil", description: "Data pendidikan dihapus." });
       }
-      queryClient.invalidateQueries({ queryKey: ['education'] });
+      await refetch();
     } catch (error) {
       toast({ variant: "destructive", title: "Gagal", description: "Gagal menghapus data." });
     } finally {
+      setIsDeleting(false);
       setDeleteAlert({ isOpen: false });
     }
   };
@@ -107,18 +114,26 @@ export default function EducationList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Pendidikan</h2>
-          <p className="text-muted-foreground">Riwayat pendidikan dan sertifikasi akademis.</p>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            Pendidikan
+            {isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          </h1>
+          <p className="text-muted-foreground">Kelola riwayat pendidikan Anda.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
             {selectedIds.length > 0 && (
-                <Button variant="destructive" onClick={handleBulkDelete}>
-                    <Trash2 className="mr-2 h-4 w-4" /> Hapus ({selectedIds.length})
+                <Button variant="destructive" size="sm" onClick={handleBulkDelete} disabled={isDeleting}>
+                    {isDeleting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                    Hapus ({selectedIds.length})
                 </Button>
             )}
-            <Button variant="outline" onClick={toggleSelectAll}>
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+                Refresh
+            </Button>
+            <Button variant="outline" onClick={toggleSelectAll} disabled={educationList.length === 0}>
                 {educationList.length > 0 && selectedIds.length === educationList.length ? <CheckSquare className="mr-2 h-4 w-4" /> : <Square className="mr-2 h-4 w-4" />}
                 {educationList.length > 0 && selectedIds.length === educationList.length ? 'Batal Pilih' : 'Pilih Semua'}
             </Button>

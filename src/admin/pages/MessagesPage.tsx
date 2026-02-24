@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { api } from '../../services/api';
-import { Trash2, Mail, MessageSquare, Search, CheckSquare, Square, MoreVertical, Eye } from 'lucide-react';
+import { Trash2, Mail, MessageSquare, Search, CheckSquare, Square, MoreVertical, Eye, Loader2, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -34,9 +34,11 @@ export default function MessagesPage() {
     isBulk?: boolean;
   }>({ isOpen: false });
 
-  const { data: messages = [], isLoading } = useQuery({
+  const { data: messages = [], isLoading, isFetching } = useQuery({
     queryKey: ['messages'],
     queryFn: api.messages.getAll,
+    refetchInterval: 5000, // Poll every 5 seconds for real-time updates
+    refetchIntervalInBackground: true,
     select: (response: any) => {
        if (Array.isArray(response)) return response;
        if (response && Array.isArray(response.data)) return response.data;
@@ -52,7 +54,10 @@ export default function MessagesPage() {
     setDeleteAlert({ isOpen: true, isBulk: true });
   };
 
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const confirmDelete = async () => {
+    setIsDeleting(true);
     try {
       if (deleteAlert.isBulk) {
         await api.messages.bulkDelete(selectedIds);
@@ -62,10 +67,11 @@ export default function MessagesPage() {
         await api.messages.delete(deleteAlert.id);
         toast({ title: "Berhasil", description: "Pesan dihapus." });
       }
-      queryClient.invalidateQueries({ queryKey: ['messages'] });
+      await queryClient.invalidateQueries({ queryKey: ['messages'] });
     } catch (error) {
       toast({ variant: "destructive", title: "Gagal", description: "Gagal menghapus pesan." });
     } finally {
+      setIsDeleting(false);
       setDeleteAlert({ isOpen: false });
     }
   };
@@ -96,24 +102,28 @@ export default function MessagesPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Pesan Masuk</h1>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            Pesan Masuk
+            {isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          </h1>
           <p className="text-muted-foreground">Kelola pesan yang masuk dari formulir kontak.</p>
         </div>
-        <div className="flex gap-2 w-full md:w-auto">
-             {selectedIds.length > 0 && (
-                <Button variant="destructive" onClick={handleBulkDelete}>
-                    <Trash2 className="mr-2 h-4 w-4" /> Hapus ({selectedIds.length})
+        <div className="flex gap-2 items-center">
+            {selectedIds.length > 0 && (
+                <Button variant="destructive" size="sm" onClick={handleBulkDelete} disabled={isDeleting}>
+                    {isDeleting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                    Hapus ({selectedIds.length})
                 </Button>
             )}
-             <Button variant="outline" onClick={toggleSelectAll}>
-                {filteredMessages.length > 0 && selectedIds.length === filteredMessages.length ? <CheckSquare className="mr-2 h-4 w-4" /> : <Square className="mr-2 h-4 w-4" />}
-                {filteredMessages.length > 0 && selectedIds.length === filteredMessages.length ? 'Batal Pilih' : 'Pilih Semua'}
-             </Button>
+            <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ['messages'] })} disabled={isFetching}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+                Refresh
+            </Button>
         </div>
       </div>
-
-      <div className="flex items-center space-x-2">
-        <div className="relative flex-1 max-w-sm">
+      
+      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="relative flex-1 w-full md:max-w-sm">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
@@ -122,6 +132,12 @@ export default function MessagesPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+        </div>
+        <div className="flex gap-2 w-full md:w-auto">
+             <Button variant="outline" onClick={toggleSelectAll} disabled={filteredMessages.length === 0}>
+                {filteredMessages.length > 0 && selectedIds.length === filteredMessages.length ? <CheckSquare className="mr-2 h-4 w-4" /> : <Square className="mr-2 h-4 w-4" />}
+                {filteredMessages.length > 0 && selectedIds.length === filteredMessages.length ? 'Batal Pilih' : 'Pilih Semua'}
+             </Button>
         </div>
       </div>
 
@@ -186,50 +202,53 @@ export default function MessagesPage() {
         onClose={() => setDeleteAlert({ isOpen: false })}
         onConfirm={confirmDelete}
         title={deleteAlert.isBulk ? `Hapus ${selectedIds.length} Pesan?` : "Hapus Pesan?"}
-        description={
-          deleteAlert.isBulk
+        description={deleteAlert.isBulk
             ? "Apakah Anda yakin ingin menghapus pesan yang dipilih? Tindakan ini tidak dapat dibatalkan."
             : "Apakah Anda yakin ingin menghapus pesan ini? Tindakan ini tidak dapat dibatalkan."
         }
       />
-
+      
+      {/* Dialog for View Message */}
       <Dialog open={!!viewMessage} onOpenChange={(open) => !open && setViewMessage(null)}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Detail Pesan</DialogTitle>
             <DialogDescription>
-              Diterima pada {viewMessage && format(new Date(viewMessage.createdAt), 'dd MMMM yyyy, HH:mm', { locale: idLocale })}
+              {viewMessage && `Diterima pada ${format(new Date(viewMessage.createdAt), 'dd MMMM yyyy, HH:mm', { locale: idLocale })}`}
             </DialogDescription>
           </DialogHeader>
           
           {viewMessage && (
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="text-sm font-medium text-muted-foreground">Pengirim:</span>
-                <span className="col-span-3 font-medium">{viewMessage.senderName}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="text-sm font-medium text-muted-foreground">Email:</span>
-                <span className="col-span-3 font-medium select-all">{viewMessage.email}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="text-sm font-medium text-muted-foreground">Subjek:</span>
-                <span className="col-span-3 font-medium">{viewMessage.subject}</span>
-              </div>
-              <div className="space-y-2 border-t pt-4 mt-2">
-                <span className="text-sm font-medium text-muted-foreground">Pesan:</span>
-                <div className="p-4 bg-muted rounded-md text-sm whitespace-pre-wrap">
-                    {viewMessage.message}
-                </div>
-              </div>
+               <div className="space-y-1">
+                 <h4 className="text-sm font-medium text-muted-foreground">Pengirim</h4>
+                 <p className="font-medium">{viewMessage.senderName}</p>
+               </div>
+               <div className="space-y-1">
+                 <h4 className="text-sm font-medium text-muted-foreground">Email</h4>
+                 <p className="font-medium select-all">{viewMessage.email}</p>
+               </div>
+               <div className="space-y-1">
+                 <h4 className="text-sm font-medium text-muted-foreground">Subjek</h4>
+                 <p className="font-medium">{viewMessage.subject}</p>
+               </div>
+               <div className="space-y-1 pt-2 border-t mt-2">
+                 <h4 className="text-sm font-medium text-muted-foreground mb-2">Pesan</h4>
+                 <div className="p-4 bg-muted/50 rounded-md text-sm whitespace-pre-wrap border">
+                     {viewMessage.message}
+                 </div>
+               </div>
             </div>
           )}
           
           <div className="flex justify-end gap-2">
              <Button variant="outline" onClick={() => setViewMessage(null)}>Tutup</Button>
-             <Button variant="destructive" onClick={() => { handleDelete(viewMessage.id); setViewMessage(null); }}>
-                <Trash2 className="mr-2 h-4 w-4" /> Hapus Pesan
-             </Button>
+             {viewMessage && (
+                <Button variant="destructive" onClick={() => { handleDelete(viewMessage.id); setViewMessage(null); }} disabled={isDeleting}>
+                    {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                    Hapus Pesan
+                </Button>
+             )}
           </div>
         </DialogContent>
       </Dialog>

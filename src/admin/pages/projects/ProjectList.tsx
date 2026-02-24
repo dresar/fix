@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { api } from '../../services/api';
-import { Plus, Trash2, Edit, ExternalLink, Github, Youtube, Layers, MoreVertical, ChevronLeft, ChevronRight, Filter, CheckSquare, Square } from 'lucide-react';
+import { Plus, Trash2, Edit, ExternalLink, Github, Youtube, Layers, MoreVertical, ChevronLeft, ChevronRight, Filter, CheckSquare, Square, Loader2, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -14,6 +14,7 @@ import { ModernLoader } from '@/components/ui/ModernLoader';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DeleteAlert } from '@/admin/components/DeleteAlert';
+import { CategoryManager as ProjectCategoryManager } from './CategoryManager';
 
 export default function ProjectList() {
   const queryClient = useQueryClient();
@@ -33,10 +34,11 @@ export default function ProjectList() {
     isBulk?: boolean; // If bulk delete
   }>({ isOpen: false });
 
-  const { data: projects = [] } = useQuery({
+  const { data: projects = [], isFetching, isLoading } = useQuery({
     queryKey: ['projects'],
     queryFn: api.projects.getAll,
-    // Stale time handled globally in App.tsx (Infinity)
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
     select: (response: any) => {
        if (Array.isArray(response)) return response;
        if (response && Array.isArray(response.data)) return response.data;
@@ -47,10 +49,6 @@ export default function ProjectList() {
   const { data: categories = [] } = useQuery({
     queryKey: ['project-categories'],
     queryFn: api.projectCategories.getAll,
-    // Stale time handled globally in App.tsx (Infinity)
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-    staleTime: 0,
   });
 
   // Removed loader
@@ -86,20 +84,24 @@ export default function ProjectList() {
     }
   };
 
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const confirmDelete = async () => {
+    setIsDeleting(true);
     try {
       if (deleteAlert.isBulk) {
         await api.projects.bulkDelete(selectedIds);
-        toast({ title: "Berhasil", description: `${selectedIds.length} project dihapus.` });
+        toast({ title: "Berhasil", description: `${selectedIds.length} proyek dihapus.` });
         setSelectedIds([]);
       } else if (deleteAlert.id) {
         await api.projects.delete(deleteAlert.id);
-        toast({ title: "Berhasil", description: "Project dihapus." });
+        toast({ title: "Berhasil", description: "Proyek dihapus." });
       }
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      await queryClient.invalidateQueries({ queryKey: ['projects'] });
     } catch (error) {
-      toast({ variant: "destructive", title: "Gagal", description: "Gagal menghapus data." });
+      toast({ variant: "destructive", title: "Gagal", description: "Gagal menghapus proyek." });
     } finally {
+      setIsDeleting(false);
       setDeleteAlert({ isOpen: false });
     }
   };
@@ -115,36 +117,53 @@ export default function ProjectList() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <h1 className="text-3xl font-bold tracking-tight">Daftar Project</h1>
-        <div className="flex gap-2 w-full md:w-auto">
-             {selectedIds.length > 0 && (
-                <Button variant="destructive" onClick={handleBulkDelete}>
-                    <Trash2 className="mr-2 h-4 w-4" /> Hapus ({selectedIds.length})
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            Proyek
+            {isFetching && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          </h1>
+          <p className="text-muted-foreground">Kelola portofolio proyek Anda.</p>
+        </div>
+        <div className="flex gap-2 items-center">
+            {selectedIds.length > 0 && (
+                <Button variant="destructive" size="sm" onClick={handleBulkDelete} disabled={isDeleting}>
+                    {isDeleting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Trash2 className="h-4 w-4 mr-2" />}
+                    Hapus ({selectedIds.length})
                 </Button>
             )}
-             <Button variant="outline" onClick={toggleSelectAll}>
-                {filteredProjects.length > 0 && selectedIds.length === filteredProjects.length ? <CheckSquare className="mr-2 h-4 w-4" /> : <Square className="mr-2 h-4 w-4" />}
-                {filteredProjects.length > 0 && selectedIds.length === filteredProjects.length ? 'Batal Pilih' : 'Pilih Semua'}
-             </Button>
+            <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ['projects'] })} disabled={isFetching}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+                Refresh
+            </Button>
+            <Button onClick={() => navigate('/admin/projects/new')}>
+              <Plus className="mr-2 h-4 w-4" /> Tambah Proyek
+            </Button>
+        </div>
+      </div>
 
-             <div className="w-[200px]">
-                <Select value={selectedCategory} onValueChange={(val) => { setSelectedCategory(val); setCurrentPage(1); }}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Filter Kategori" />
+      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+            <div className="relative">
+                 <Filter className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="w-full sm:w-[180px] pl-9">
+                        <SelectValue placeholder="Kategori" />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">Semua Kategori</SelectItem>
-                        {categories.map((cat: any) => (
-                            <SelectItem key={cat.id} value={cat.id.toString()}>
-                                {cat.name}
-                            </SelectItem>
+                        {categories.map((c: any) => (
+                            <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
                         ))}
                     </SelectContent>
-                </Select>
+                 </Select>
             </div>
-            <Button onClick={() => navigate('/admin/projects/new')}>
-            <Plus className="mr-2 h-4 w-4" /> Tambah Project
-            </Button>
+            <ProjectCategoryManager />
+        </div>
+        <div className="flex gap-2 w-full md:w-auto">
+             <Button variant="outline" onClick={toggleSelectAll} disabled={filteredProjects.length === 0}>
+                {filteredProjects.length > 0 && selectedIds.length === filteredProjects.length ? <CheckSquare className="mr-2 h-4 w-4" /> : <Square className="mr-2 h-4 w-4" />}
+                {filteredProjects.length > 0 && selectedIds.length === filteredProjects.length ? 'Batal Pilih' : 'Pilih Semua'}
+             </Button>
         </div>
       </div>
 
