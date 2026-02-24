@@ -63,10 +63,18 @@ export function SkillCategoryManager() {
         mutationFn: api.skillCategories.create,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['skillCategories'] });
-            form.reset();
+            form.reset({ name: '', slug: '', order: 0 });
             toast({ title: "Berhasil", description: "Kategori skill berhasil dibuat." });
         },
-        onError: () => toast({ variant: "destructive", title: "Gagal", description: "Gagal membuat kategori skill." })
+        onError: (error: any) => {
+             const message = error.response?.data?.error || error.message;
+             if (message?.includes('unique constraint') || message?.includes('already exists')) {
+                 toast({ variant: "destructive", title: "Gagal", description: "Nama kategori sudah ada. Gunakan nama lain." });
+                 form.setError('name', { type: 'manual', message: 'Nama kategori sudah digunakan' });
+            } else {
+                 toast({ variant: "destructive", title: "Gagal", description: "Gagal membuat kategori skill." });
+            }
+        }
     });
 
     const updateMutation = useMutation({
@@ -74,10 +82,18 @@ export function SkillCategoryManager() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['skillCategories'] });
             setEditingId(null);
-            form.reset();
+            form.reset({ name: '', slug: '', order: 0 });
             toast({ title: "Berhasil", description: "Kategori skill berhasil diperbarui." });
         },
-        onError: () => toast({ variant: "destructive", title: "Gagal", description: "Gagal memperbarui kategori skill." })
+        onError: (error: any) => {
+             const message = error.response?.data?.error || error.message;
+             if (message?.includes('unique constraint') || message?.includes('already exists')) {
+                 toast({ variant: "destructive", title: "Gagal", description: "Nama kategori sudah ada. Gunakan nama lain." });
+                 form.setError('name', { type: 'manual', message: 'Nama kategori sudah digunakan' });
+            } else {
+                 toast({ variant: "destructive", title: "Gagal", description: "Gagal memperbarui kategori skill." });
+            }
+        }
     });
 
     const deleteMutation = useMutation({

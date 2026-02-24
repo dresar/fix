@@ -57,10 +57,18 @@ export function CertificateCategoryManager() {
         mutationFn: api.certificateCategories.create,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['certificate-categories'] });
-            form.reset();
-            toast({ title: "Success", description: "Category created successfully." });
+            form.reset({ name: '', slug: '' });
+            toast({ title: "Berhasil", description: "Kategori berhasil dibuat." });
         },
-        onError: () => toast({ variant: "destructive", title: "Error", description: "Failed to create category." })
+        onError: (error: any) => {
+            const message = error.response?.data?.error || error.message;
+            if (message?.includes('unique constraint') || message?.includes('already exists')) {
+                 toast({ variant: "destructive", title: "Gagal", description: "Nama kategori sudah ada. Gunakan nama lain." });
+                 form.setError('name', { type: 'manual', message: 'Nama kategori sudah digunakan' });
+            } else {
+                 toast({ variant: "destructive", title: "Gagal", description: "Gagal membuat kategori." });
+            }
+        }
     });
 
     const updateMutation = useMutation({
@@ -68,10 +76,18 @@ export function CertificateCategoryManager() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['certificate-categories'] });
             setEditingId(null);
-            form.reset();
-            toast({ title: "Success", description: "Category updated successfully." });
+            form.reset({ name: '', slug: '' });
+            toast({ title: "Berhasil", description: "Kategori berhasil diperbarui." });
         },
-        onError: () => toast({ variant: "destructive", title: "Error", description: "Failed to update category." })
+        onError: (error: any) => {
+            const message = error.response?.data?.error || error.message;
+             if (message?.includes('unique constraint') || message?.includes('already exists')) {
+                 toast({ variant: "destructive", title: "Gagal", description: "Nama kategori sudah ada. Gunakan nama lain." });
+                 form.setError('name', { type: 'manual', message: 'Nama kategori sudah digunakan' });
+            } else {
+                 toast({ variant: "destructive", title: "Gagal", description: "Gagal memperbarui kategori." });
+            }
+        }
     });
 
     const deleteMutation = useMutation({
