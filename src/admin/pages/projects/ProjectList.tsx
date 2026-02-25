@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ModernLoader } from '@/components/ui/ModernLoader';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { formatDistanceToNow } from 'date-fns';
+import { id as idLocale } from 'date-fns/locale';
 import { DeleteAlert } from '@/admin/components/DeleteAlert';
 import { CategoryManager as ProjectCategoryManager } from './CategoryManager';
 
@@ -229,6 +231,15 @@ export default function ProjectList() {
                     <p className="text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">
                         {proj.description || "Tidak ada deskripsi singkat."}
                     </p>
+
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs text-muted-foreground">
+                           {proj.custom_created_at 
+                              ? formatDistanceToNow(new Date(proj.custom_created_at), { addSuffix: true, locale: idLocale })
+                              : formatDistanceToNow(new Date(proj.createdAt), { addSuffix: true, locale: idLocale })
+                           }
+                        </span>
+                    </div>
                     
                     <div className="flex items-center gap-2 pt-2 border-t mt-auto">
                         {proj.repoUrl ? (

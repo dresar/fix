@@ -174,6 +174,7 @@ export const projects = pgTable('project', {
   order: integer('order').default(0).notNull(),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().notNull(),
+  custom_created_at: timestamp('custom_created_at'),
 });
 
 export const projectRelations = relations(projects, ({ one }) => ({
@@ -399,6 +400,7 @@ const ensureSchema = async () => {
             await client.query(`ALTER TABLE skill ADD COLUMN IF NOT EXISTS "logo_url" varchar(500)`);
             await client.query(`ALTER TABLE skill_category ADD COLUMN IF NOT EXISTS "order" integer DEFAULT 0`);
             await client.query(`ALTER TABLE project ADD COLUMN IF NOT EXISTS "summaries" text DEFAULT '[]'`);
+            await client.query(`ALTER TABLE project ADD COLUMN IF NOT EXISTS "custom_created_at" timestamp`);
         } finally {
             client.release();
         }
@@ -524,7 +526,7 @@ const relationMap: Record<string, any> = {
 
 // Helper to process body dates
 const processBodyDates = (body: any) => {
-    const dateFields = ['startDate', 'endDate', 'issueDate', 'published_at', 'date', 'createdAt', 'updatedAt', 'created_at', 'updated_at', 'maintenance_end_time'];
+    const dateFields = ['startDate', 'endDate', 'issueDate', 'published_at', 'date', 'createdAt', 'updatedAt', 'created_at', 'updated_at', 'maintenance_end_time', 'custom_created_at'];
     const processed = { ...body };
     
     for (const key of Object.keys(processed)) {

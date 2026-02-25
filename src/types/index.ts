@@ -126,6 +126,7 @@ export interface Project {
   order: number;
   createdAt: string;
   updatedAt: string;
+  custom_created_at?: string | null;
   is_published: boolean;
   publish_at?: string | null;
   images?: ProjectImage[];

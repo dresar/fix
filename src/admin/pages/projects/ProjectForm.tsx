@@ -22,6 +22,12 @@ import { CategoryManager } from './CategoryManager';
 import { ModernLoader } from '@/components/ui/ModernLoader';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { id as idLocale } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 const projectSchema = z.object({
     title: z.string().min(1, "Judul diperlukan"),
@@ -36,6 +42,7 @@ const projectSchema = z.object({
   tech: z.string().optional(), // Comma separated
   gallery: z.string().optional(), // JSON string
   is_published: z.boolean().default(true),
+  custom_created_at: z.date().optional(),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -45,12 +52,10 @@ export default function ProjectForm() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [], isLoading: isCategoriesLoading } = useQuery({
     queryKey: ['project-categories'],
     queryFn: api.projectCategories.getAll,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-    staleTime: 0,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -128,7 +133,8 @@ export default function ProjectForm() {
           repoUrl: project.repoUrl || '',
           tech: parseTech(project.tech),
           gallery: typeof project.gallery === 'string' ? project.gallery : JSON.stringify(project.gallery || []),
-          is_published: project.is_published
+          is_published: project.is_published,
+          custom_created_at: project.custom_created_at ? new Date(project.custom_created_at) : undefined,
         });
         
         if (project.summaries) {
@@ -155,18 +161,18 @@ export default function ProjectForm() {
   const onSubmit = async (data: ProjectFormValues) => {
     setIsSubmitting(true);
     try {
-      // Format tech to array if needed by backend, but our schema update handles string/array
-      // Let's keep it as string in form and backend parses it if needed or we send array
-      // Backend schema expects string (JSON stringified) for tech and gallery
-      // And we must NOT send 'summaries' as it's not a column in projects table
-      const formattedData = {
+      const formattedData: any = {
         ...data,
         tech: JSON.stringify(data.tech ? data.tech.split(',').map(t => t.trim()).filter(Boolean) : []),
-        gallery: data.gallery || '[]', // It's already a JSON string from the form
+        gallery: data.gallery || '[]',
         summaries: JSON.stringify(summaries),
       };
 
-      let projectId = Number(id);
+      if (data.custom_created_at) {
+          formattedData.custom_created_at = data.custom_created_at.toISOString();
+      } else {
+          formattedData.custom_created_at = null;
+      }
 
       if (id) {
         await api.projects.update(Number(id), formattedData);
@@ -175,12 +181,10 @@ export default function ProjectForm() {
         navigate('/admin/projects');
       } else {
         const res = await api.projects.create(formattedData);
-        projectId = res.id;
         toast({ title: "Berhasil", description: "Project dibuat." });
         await queryClient.invalidateQueries({ queryKey: ['projects'] });
         navigate('/admin/projects');
       }
-      
     } catch (error) {
       toast({ variant: "destructive", title: "Gagal menyimpan" });
     } finally {
@@ -633,6 +637,39 @@ export default function ProjectForm() {
                                 checked={form.watch('is_published')}
                                 onCheckedChange={(checked) => form.setValue('is_published', checked, { shouldDirty: true })}
                             />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Tanggal Pembuatan (Opsional)</Label>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant={"outline"}
+                                        className={cn(
+                                            "w-full justify-start text-left font-normal",
+                                            !form.watch("custom_created_at") && "text-muted-foreground"
+                                        )}
+                                    >
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {form.watch("custom_created_at") ? (
+                                            format(form.watch("custom_created_at")!, "PPP", { locale: idLocale })
+                                        ) : (
+                                            <span>Pilih tanggal (Default: Hari ini)</span>
+                                        )}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                    <Calendar
+                                        mode="single"
+                                        selected={form.watch("custom_created_at")}
+                                        onSelect={(date) => form.setValue("custom_created_at", date)}
+                                        initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                            <p className="text-xs text-muted-foreground">
+                                Jika dikosongkan, akan menggunakan tanggal hari ini. Tanggal ini mempengaruhi urutan dan tampilan "Dibuat pada".
+                            </p>
                         </div>
                         
                         <Button type="submit" className="w-full" disabled={isSubmitting}>
