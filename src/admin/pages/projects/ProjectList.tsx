@@ -233,7 +233,7 @@ export default function ProjectList() {
                     </p>
 
                     <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground" title={proj.custom_created_at ? new Date(proj.custom_created_at).toLocaleDateString('id-ID', { dateStyle: 'full' }) : new Date(proj.createdAt).toLocaleDateString('id-ID', { dateStyle: 'full' })}>
                            {proj.custom_created_at 
                               ? formatDistanceToNow(new Date(proj.custom_created_at), { addSuffix: true, locale: idLocale })
                               : formatDistanceToNow(new Date(proj.createdAt), { addSuffix: true, locale: idLocale })

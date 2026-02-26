@@ -75,12 +75,22 @@ export default defineConfig(({ mode }) => ({
         description: 'My Professional Portfolio',
         theme_color: '#ffffff',
         icons: [
-          {
-            src: 'favicon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml'
-          },
-        ],
+            {
+              src: 'pwa-192x192.png',
+              sizes: '192x192',
+              type: 'image/png'
+            },
+            {
+              src: 'pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png'
+            },
+            {
+              src: 'favicon.svg',
+              sizes: 'any',
+              type: 'image/svg+xml'
+            },
+          ],
       },
     }),
   ],

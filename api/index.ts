@@ -393,6 +393,26 @@ const ensureSchema = async () => {
     try {
         const client = await getPool().connect();
         try {
+            // Ensure tables exist (Basic Schema)
+            await client.query(`
+                CREATE TABLE IF NOT EXISTS certificate_category (
+                    id SERIAL PRIMARY KEY,
+                    name TEXT NOT NULL UNIQUE,
+                    slug TEXT NOT NULL UNIQUE
+                );
+            `);
+            await client.query(`
+                CREATE TABLE IF NOT EXISTS certificate (
+                    id SERIAL PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    issuer TEXT NOT NULL,
+                    "issueDate" TIMESTAMP NOT NULL,
+                    "credentialUrl" TEXT,
+                    image TEXT,
+                    "categoryId" INTEGER REFERENCES certificate_category(id)
+                );
+            `);
+
             await client.query(`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS "seoDesc" text`);
             await client.query(`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS "cdn_url" text`);
             await client.query(`ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS "maintenance_end_time" timestamp`);
@@ -1273,6 +1293,13 @@ export default async function handler(req: any, res: any) {
         const createBodyRaw = await parseBody(req);
         // console.log(`[DEBUG] Create ${resourceName} Raw Body:`, JSON.stringify(createBodyRaw));
         const createBody = processBodyDates(createBodyRaw);
+        
+        // Auto-generate slug if missing and required
+        if ('slug' in table && !createBody.slug && (createBody.name || createBody.title)) {
+            const source = createBody.name || createBody.title;
+            createBody.slug = source.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        }
+
         // console.log(`[DEBUG] Create ${resourceName} Processed Body:`, JSON.stringify(createBody));
         {
           const singletonResources = ['profile', 'settings', 'home-content', 'about-content'];
