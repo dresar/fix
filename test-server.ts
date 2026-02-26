@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-let port = Number(process.env.PORT || 3001);
+let port = Number(process.env.PORT || 3004);
 
 const server = http.createServer((req, res) => {
   // Basic CORS headers

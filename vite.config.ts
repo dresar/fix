@@ -11,12 +11,12 @@ export default defineConfig(({ mode }) => ({
     port: 8084,
     proxy: {
       "/api": {
-        target: "http://localhost:3001",
+        target: "http://localhost:3004",
         changeOrigin: true,
         secure: false,
       },
       "/media": {
-        target: "http://localhost:3001",
+        target: "http://localhost:3004",
         changeOrigin: true,
         secure: false,
       },
